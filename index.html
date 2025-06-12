@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Interativo para Prova - Eixo 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .section-content {
+            display: none;
+            overflow: hidden;
+            transition: max-height 0.7s ease-in-out;
+        }
+        .flashcard-back {
+            display: none;
+            transform: rotateY(180deg);
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard-front, .flashcard-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .tab-button.active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .accordion-button.active svg {
+            transform: rotate(180deg);
+        }
+        .quiz-option:hover {
+            background-color: #f0f9ff;
+        }
+        .correct-answer {
+            background-color: #dcfce7;
+            border-left-color: #22c55e;
+        }
+        .wrong-answer {
+            background-color: #fee2e2;
+            border-left-color: #ef4444;
+        }
+        .explanation {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8" x-data="studyGuide()">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-600">Guia de Estudo Interativo</h1>
+            <p class="mt-4 text-lg text-gray-600">Um material completo sobre Políticas Públicas, Segurança e Proteção Social no Brasil.</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="sticky top-0 bg-white/80 backdrop-blur-sm z-10 mb-8 rounded-xl shadow-sm p-2 border">
+            <nav class="flex flex-wrap justify-center gap-2 md:gap-4">
+                <template x-for="(section, index) in sections" :key="index">
+                    <button @click="activeSection = index; scrollToSection(index)" 
+                            :class="{'active': activeSection === index}"
+                            class="tab-button px-3 py-2 text-sm md:text-base border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors duration-300">
+                        <span x-text="section.title"></span>
+                    </button>
+                </template>
+            </nav>
+        </div>
+
+        <!-- Sections -->
+        <main>
+            <template x-for="(section, index) in sections" :key="index">
+                <section :id="'section-' + index" class="mb-12 p-4 md:p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
+                    <button @click="toggleAccordion(index)" class="w-full flex justify-between items-center text-left">
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800" x-text="section.title"></h2>
+                        <svg class="w-6 h-6 text-gray-500 transition-transform duration-300" :class="{'rotate-180': openAccordions.includes(index)}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <div x-show="openAccordions.includes(index)" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="mt-6 prose prose-lg max-w-none prose-blue">
+                        <div x-html="section.content"></div>
+
+                        <!-- Flashcards specific logic -->
+                        <div x-show="section.title === 'Flashcards'">
+                           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                               <template x-for="(flashcard, i) in flashcards" :key="i">
+                                   <div class="flashcard perspective-1000 h-64">
+                                       <div class="flashcard-inner relative w-full h-full" :class="{ 'flipped': flashcard.flipped }">
+                                           <div @click="flashcard.flipped = !flashcard.flipped" class="flashcard-front absolute w-full h-full bg-white border border-gray-200 rounded-xl shadow-md p-6 flex flex-col justify-center items-center text-center cursor-pointer">
+                                               <p class="font-semibold text-lg" x-text="flashcard.question"></p>
+                                           </div>
+                                           <div @click="flashcard.flipped = !flashcard.flipped" class="flashcard-back absolute w-full h-full bg-blue-100 border border-blue-200 rounded-xl shadow-md p-6 flex flex-col justify-center items-center text-center cursor-pointer" style="transform: rotateY(180deg);">
+                                               <p class="text-sm" x-text="flashcard.answer"></p>
+                                           </div>
+                                       </div>
+                                   </div>
+                               </template>
+                           </div>
+                        </div>
+
+                        <!-- Quiz specific logic -->
+                        <div x-show="section.title === 'Quiz Interativo'">
+                            <div class="space-y-8 mt-6">
+                                <template x-for="(q, i) in quiz" :key="i">
+                                    <div class="p-6 border border-gray-200 rounded-xl">
+                                        <p class="font-semibold mb-4" x-text="(i+1) + '. ' + q.question"></p>
+                                        <div class="space-y-3">
+                                            <template x-for="(option, optIndex) in q.options" :key="optIndex">
+                                                <label :for="'q'+i+'opt'+optIndex" class="quiz-option flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer transition-colors" :class="{
+                                                    'correct-answer': q.submitted && option === q.correct_answer,
+                                                    'wrong-answer': q.submitted && q.user_answer === option && option !== q.correct_answer
+                                                }">
+                                                    <input type="radio" :name="'q'+i" :id="'q'+i+'opt'+optIndex" :value="option" x-model="q.user_answer" :disabled="q.submitted">
+                                                    <span class="ml-3" x-text="option"></span>
+                                                </label>
+                                            </template>
+                                        </div>
+                                        <button @click="submitQuizAnswer(i)" x-show="!q.submitted" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Verificar</button>
+                                        <div class="explanation" :style="{ display: q.submitted ? 'block' : 'none' }">
+                                            <p class="font-bold">Gabarito:</p>
+                                            <p x-text="q.explanation"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div class="mt-8 text-center" x-show="quizSubmitted">
+                                    <h3 class="text-2xl font-bold">Resultado do Quiz</h3>
+                                    <p class="text-xl mt-2">Você acertou <span x-text="quizScore"></span> de <span x-text="quiz.length"></span> perguntas.</p>
+                                    <button @click="resetQuiz()" class="mt-4 px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">Tentar Novamente</button>
+                                </div>
+                                <div class="text-center" x-show="!quizSubmitted">
+                                     <button @click="submitAllQuiz()" class="px-8 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition">Finalizar Quiz e Ver Pontuação</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Discursive specific logic -->
+                        <div x-show="section.title === 'Provas Discursivas'">
+                            <div class="space-y-12 mt-6">
+                                <template x-for="(prova, i) in discursiveExams" :key="i">
+                                    <div class="p-6 border-l-4 border-blue-500 bg-blue-50 rounded-r-lg">
+                                        <h3 class="text-xl font-bold mb-4" x-text="'Prova ' + (i+1)"></h3>
+                                        <template x-for="(pergunta, pIndex) in prova.questions" :key="pIndex">
+                                            <div class="mb-8">
+                                                <h4 class="font-semibold" x-text="'Pergunta ' + (pIndex+1) + ':'"></h4>
+                                                <p class="mt-2 mb-4" x-text="pergunta.prompt"></p>
+                                                <button @click="pergunta.show_answer = !pergunta.show_answer" class="text-sm text-blue-600 hover:underline">
+                                                    <span x-text="pergunta.show_answer ? 'Ocultar Gabarito' : 'Ver Gabarito e Resolução'"></span>
+                                                </button>
+                                                <div x-show="pergunta.show_answer" x-transition class="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-200">
+                                                    <div x-html="pergunta.answer"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            </template>
+        </main>
+        
+        <footer class="text-center mt-12 py-6 border-t border-gray-200">
+            <p class="text-gray-500">Bons estudos! Este guia foi gerado para otimizar sua preparação.</p>
+        </footer>
+    </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('studyGuide', () => ({
+        activeSection: 0,
+        openAccordions: [0], // Start with the first section open
+        sections: [
+            {
+                title: 'Resumo por Tópicos',
+                content: `
+                    <p class="mb-4">Esta seção destaca os temas de maior importância e suas inter-relações, servindo como um pilar para o entendimento da matéria.</p>
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">1. Segurança Pública, Violência e o Papel do Estado</h4>
+                            <p>A situação da segurança pública no Brasil, especialmente no Rio de Janeiro, é marcada pela alta letalidade policial e pelo confronto com o crime organizado, que detém armamento de guerra (fuzis, metralhadoras .30 e .50, etc.). A <strong>ADPF 635</strong> surge como um instrumento jurídico crucial para questionar a política de segurança do estado, buscando maior controle e transparência nas operações policiais. As críticas do Ministério Público Federal (PGR) focam na ausência de metas de redução da letalidade e na falta de equipamentos como GPS e câmeras nas viaturas, apontando para um possível "desvio de finalidade" na atuação estatal, que priorizaria o confronto em detrimento da vida.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">2. Políticas Sociais: Universalismo vs. Focalização</h4>
+                            <p>A Proteção Social no Brasil, consolidada pela <strong>Constituição de 1988</strong>, se estrutura em torno do conceito de Seguridade Social (Saúde, Previdência, Assistência). O debate central reside na tensão entre políticas <strong>universais</strong> (para todos, como o SUS) e <strong>focalizadas</strong> (para grupos específicos, como o Bolsa Família). As universais promovem coesão social, mas têm alto custo. As focalizadas são mais eficientes na alocação de recursos para os mais pobres, mas arriscam a estigmatização e a criação de uma "cidadania precária". O Brasil adota um modelo híbrido, buscando equilibrar ambos os enfoques.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">3. Federalismo, Governança e Coordenação Intergovernamental</h4>
+                            <p>O federalismo cooperativo brasileiro, fortalecido pela CF/88, descentralizou responsabilidades, conferindo grande autonomia aos municípios. Para evitar a fragmentação, são necessários robustos <strong>mecanismos de coordenação</strong> entre União, estados e municípios. Estes incluem instrumentos financeiros (repasses), normativos (leis), e organizacionais, como as <strong>Comissões Intergestores (CIB e CIT)</strong> no SUAS e SUS. O SUAS é um exemplo de sucesso na pactuação federativa, embora a dependência de recursos federais varie conforme a capacidade econômica do município.</p>
+                        </div>
+                         <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">4. Ferramentas de Análise e Avaliação de Políticas Públicas</h4>
+                            <p>Para uma gestão pública eficaz, são essenciais ferramentas de análise e avaliação. A <strong>Análise de Contexto (CIPI)</strong> - Institucional, Político e Ideacional - é crucial para entender o ambiente da política antes de avaliá-la. O <strong>Mapa de Processos e Resultados (MaPR)</strong> ajuda a desenhar a lógica causal de uma intervenção (insumos → atividades → produtos → resultados → impactos). O uso de <strong>indicadores</strong> (quantitativos e qualitativos) e a <strong>triangulação de evidências</strong> (estatísticas, documentos, conhecimento tácito) são fundamentais para um monitoramento robusto e uma avaliação que informe decisões e aprimore as políticas.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">5. Intersetorialidade e Desafios Contemporâneos</h4>
+                            <p>Problemas complexos como pobreza, violência e desigualdade exigem <strong>intersetorialidade</strong>, ou seja, a articulação entre diferentes políticas (saúde, educação, assistência social, segurança). No entanto, a gestão pública brasileira ainda é muito setorializada, dificultando a cooperação. Outros desafios incluem a atuação das <strong>Organizações da Sociedade Civil (OSCs)</strong> como parceiras do Estado, a impositividade das <strong>emendas parlamentares</strong> que engessa o orçamento, e a necessidade de uma <strong>transformação digital</strong> inclusiva e ética nos serviços públicos.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'Flashcards',
+                content: `<p>Clique nos cartões para revelar as respostas. Teste seu conhecimento sobre os conceitos mais importantes.</p>`
+            },
+            {
+                title: 'Linha do Tempo',
+                content: `
+                    <div class="relative border-l-4 border-blue-300 ml-4 py-6">
+                        <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">Antes de 1930 - Caridade e Filantropia</h4>
+                            <p class="text-sm text-gray-600">A proteção social era dominada por ações de caridade, principalmente por organizações religiosas como as Santas Casas de Misericórdia. O Estado tinha uma atuação mínima.</p>
+                        </div>
+                        <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">1923 - Lei Eloy Chaves</h4>
+                            <p class="text-sm text-gray-600">Considerado o marco inicial da Previdência Social no Brasil, criando as Caixas de Aposentadorias e Pensões para os ferroviários, modelo depois estendido a outras categorias.</p>
+                        </div>
+                         <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">1942 - Relatório Beveridge (Reino Unido)</h4>
+                            <p class="text-sm text-gray-600">Embora internacional, influenciou o mundo ao propor um sistema de "Seguridade Social" universal para combater os "cinco gigantes": pobreza, doença, ignorância, precariedade e ociosidade.</p>
+                        </div>
+                        <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">1964-1985 - Regime Militar</h4>
+                            <p class="text-sm text-gray-600">Período de centralização e tecnocracia. As políticas sociais são unificadas e expandidas, mas com forte controle estatal e exclusão da participação dos trabalhadores.</p>
+                        </div>
+                        <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">1988 - Constituição Cidadã</h4>
+                            <p class="text-sm text-gray-600">O grande marco da proteção social brasileira. Institui a <strong>Seguridade Social</strong> (Saúde, Previdência e Assistência Social) como direito de todos e dever do Estado, baseada nos princípios de universalidade, equidade e participação social. Cria o <strong>SUS</strong> e estabelece as bases para o <strong>SUAS</strong>.</p>
+                        </div>
+                         <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">Década de 1990 - Implementação e Desafios</h4>
+                            <p class="text-sm text-gray-600">Crescimento das Organizações da Sociedade Civil (OSCs) e início da implementação das políticas previstas na CF/88, em um contexto de ajustes fiscais e reformas neoliberais.</p>
+                        </div>
+                         <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">2003 - Criação do Bolsa Família</h4>
+                            <p class="text-sm text-gray-600">Unificação de programas anteriores, tornando-se o principal exemplo de política focalizada de transferência de renda condicionada no Brasil, com grande impacto na redução da pobreza extrema.</p>
+                        </div>
+                        <div class="mb-10 ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">2005 - Implantação do SUAS</h4>
+                            <p class="text-sm text-gray-600">O Sistema Único de Assistência Social organiza a política de assistência de forma descentralizada e participativa, com papéis definidos para União, estados e municípios e unidades como CRAS e CREAS.</p>
+                        </div>
+                        <div class="ml-8 relative">
+                            <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                            <h4 class="font-bold text-lg">2020 - ADPF 635</h4>
+                            <p class="text-sm text-gray-600">O STF proíbe operações policiais em favelas do Rio de Janeiro durante a pandemia, exceto em casos excepcionais, tornando-se um marco no controle judicial da atividade policial e da proteção dos direitos fundamentais em comunidades.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'Glossário',
+                content: `
+                    <ul class="space-y-4">
+                        <li><strong>ADPF (Arguição de Descumprimento de Preceito Fundamental):</strong> Ação judicial julgada pelo Supremo Tribunal Federal (STF) para evitar ou reparar lesão a um princípio fundamental da Constituição causada por ato do poder público. A ADPF 635, sobre a violência policial no RJ, é um exemplo emblemático.</li>
+                        <li><strong>CIPI (Análise de Contexto Institucional, Político e Ideacional):</strong> Ferramenta de análise prévia à avaliação de políticas, que examina as instituições (regras do jogo), os atores e interesses em disputa (politics) e as ideias e valores dominantes (zeitgeist).</li>
+                        <li><strong>Equidade:</strong> Princípio que busca tratar os desiguais de forma desigual, na medida de suas desigualdades, para promover a justiça social. Diferente de igualdade (tratar todos da mesma forma), a equidade reconhece as diferentes necessidades e vulnerabilidades.</li>
+                        <li><strong>Federalismo Cooperativo:</strong> Modelo de organização do Estado em que as competências e responsabilidades são compartilhadas entre os diferentes níveis de governo (União, Estados e Municípios), exigindo cooperação e pactuação.</li>
+                        <li><strong>Focalização:</strong> Estratégia de política pública que direciona recursos e serviços para um público-alvo específico, geralmente definido por critérios de renda ou vulnerabilidade, como no Programa Bolsa Família.</li>
+                        <li><strong>Intersetorialidade:</strong> Articulação entre diferentes setores de políticas públicas (ex: saúde, educação, assistência social) para dar uma resposta integrada a problemas complexos.</li>
+                        <li><strong>Letalidade Policial:</strong> Indicador que mede o número de mortes decorrentes de intervenção policial. É um termômetro crítico da violência estatal e do respeito aos direitos humanos na segurança pública.</li>
+                        <li><strong>MaPR (Mapa de Processos e Resultados):</strong> Ferramenta de planejamento e avaliação que descreve a lógica causal de uma política, conectando insumos, atividades, produtos, resultados e impactos.</li>
+                        <li><strong>Seguridade Social:</strong> Conceito estabelecido pela CF/88, que forma um sistema de proteção social integrado por três áreas: Saúde (universal), Previdência Social (contributiva) e Assistência Social (para quem dela necessitar).</li>
+                        <li><strong>SUAS (Sistema Único de Assistência Social):</strong> Modelo de gestão da política de Assistência Social no Brasil, descentralizado e participativo, que organiza os serviços em Proteção Social Básica (CRAS) e Especial (CREAS).</li>
+                        <li><strong>Universalismo:</strong> Princípio das políticas públicas que garante acesso a direitos e serviços para toda a população, sem critérios de elegibilidade. O Sistema Único de Saúde (SUS) é o maior exemplo no Brasil.</li>
+                    </ul>
+                `
+            },
+            {
+                title: 'Personagens',
+                content: `
+                    <ul class="space-y-4">
+                        <li><strong>Paulo de Martino Jannuzzi:</strong> Acadêmico referência na área de avaliação de políticas públicas e indicadores sociais no Brasil. Sua contribuição é central para entender ferramentas como o CIPI e o MaPR, sendo uma citação de peso para fundamentar a importância da avaliação contextualizada.</li>
+                        <li><strong>Wilson Witzel:</strong> Ex-governador do Rio de Janeiro, cujas declarações e políticas de segurança foram o estopim para a ADPF 635. Sua figura representa a política de confronto direto e de alta letalidade policial, servindo como exemplo prático do que a ADPF buscou frear.</li>
+                        <li><strong>Augusto Aras:</strong> Procurador-Geral da República durante a tramitação da ADPF 635. Suas manifestações no processo são fontes importantes para entender as críticas do Ministério Público à política de segurança do RJ, fornecendo argumentos técnicos e jurídicos sobre a falta de controle e o "desvio de finalidade".</li>
+                        <li><strong>Audrey Tang:</strong> Ex-ministra digital de Taiwan. Citada como referência em transformação digital centrada nas pessoas, defende que a tecnologia deve se adaptar às necessidades da sociedade, e não o contrário, promovendo inclusão e reduzindo desigualdades. É um exemplo de governança digital ética.</li>
+                        <li><strong>Otto von Bismarck:</strong> Chanceler alemão do século XIX. É uma figura histórica fundamental, pois seu governo na Alemanha foi pioneiro na criação do Seguro Social (saúde, acidentes, aposentadoria), lançando as bases do modelo de proteção social que influenciaria o mundo ocidental.</li>
+                        <li><strong>William Beveridge:</strong> Economista britânico autor do "Relatório Beveridge" (1942), que conceituou a "Seguridade Social" moderna. Sua visão de um Estado de bem-estar social que protege o cidadão "do berço ao túmulo" é um pilar teórico para as políticas universais.</li>
+                    </ul>
+                `
+            },
+            {
+                title: 'Interrelações',
+                content: `
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">Segurança Pública e Desigualdade Social</h4>
+                            <p>As fontes deixam claro que a política de segurança não pode ser dissociada da questão social. A violência e a letalidade policial concentram-se em territórios de alta vulnerabilidade social e miram uma população majoritariamente negra e pobre. A ADPF 635, ao buscar frear a violência, está, indiretamente, defendendo políticas sociais. Uma política de segurança verdadeiramente eficaz depende de ações intersetoriais que reduzam as desigualdades estruturais, como acesso à educação, saúde e emprego, diminuindo a base de recrutamento do crime e a necessidade de uma atuação puramente repressiva.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">Federalismo e a Efetividade do SUAS</h4>
+                            <p>O sucesso do Sistema Único de Assistência Social (SUAS) é um exemplo prático de como a coordenação federativa pode funcionar. O sistema só se capilarizou pelo país graças à pactuação entre União (financiamento e normas gerais), estados (articulação) e municípios (execução direta nos CRAS e CREAS). A interrelação aqui é clara: a autonomia municipal dada pela CF/88, combinada com a indução financeira e técnica do governo federal, permitiu construir uma política robusta. O desafio é a desigualdade fiscal: municípios pobres dependem quase totalmente dos repasses federais, enquanto os ricos têm mais autonomia.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">Universalismo vs. Focalização na Prática: SUS e Bolsa Família</h4>
+                            <p>A tensão entre universalismo e focalização se materializa na coexistência de políticas como o SUS e o Bolsa Família. O SUS, universal, enfrenta desafios de financiamento e qualidade, mas garante um direito básico a todos. O Bolsa Família, focalizado, é altamente eficaz para reduzir a pobreza extrema com menor custo, mas não resolve todas as dimensões da desigualdade. A interrelação está nas "condicionalidades": para receber o benefício (focalizado), a família precisa cumprir agendas de saúde e educação (universais), forçando uma articulação intersetorial que potencializa os resultados de ambas as políticas.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xl mb-2 text-blue-700">Impositividade das Emendas e Planejamento de Políticas</h4>
+                            <p>O aumento da impositividade das emendas parlamentares cria uma forte tensão com o planejamento racional de políticas públicas. Enquanto ferramentas como o MaPR e a avaliação baseada em evidências buscam otimizar o gasto público com base em diagnósticos e metas, as emendas impositivas direcionam uma fatia crescente do orçamento para critérios muitas vezes localistas e eleitorais, sem uma análise técnica aprofundada. Essa interrelação expõe um conflito central na administração pública: a disputa entre a lógica técnica (planejamento) e a lógica política (negociação parlamentar) pela alocação de recursos, o que pode fragmentar ações e dificultar políticas de longo prazo.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'Frases e Citações de Impacto',
+                content: `
+                    <blockquote class="border-l-4 border-blue-500 pl-4 italic text-gray-700">
+                        "A transformação digital deve ser sobre transformar as tecnologias para se adequarem à sociedade, e não o contrário." - <strong>Audrey Tang</strong>. (Útil para discutir políticas de tecnologia e inclusão social).
+                    </blockquote>
+                    <blockquote class="border-l-4 border-blue-500 pl-4 italic text-gray-700 mt-4">
+                        "O primeiro ato concreto que aponta para o emprego de violência letal como norte da política de segurança pública fluminense é a retirada da redução da letalidade policial do cálculo do Índice de Desempenho de Metas – IDM." - <strong>Manifestação do PGR na ADPF 635</strong>. (Perfeito para exemplificar a importância dos indicadores e como sua ausência revela prioridades políticas).
+                    </blockquote>
+                    <blockquote class="border-l-4 border-blue-500 pl-4 italic text-gray-700 mt-4">
+                        "Desvio de finalidade ocorre quando o agente público pratica um ato administrativo visando a um fim diferente daquele [...] previsto na regra de competência." (Útil para discutir a legalidade e a legitimidade da ação estatal, especialmente em segurança pública).
+                    </blockquote>
+                    <blockquote class="border-l-4 border-blue-500 pl-4 italic text-gray-700 mt-4">
+                        "Avaliações [...] contextualizadas seriam menos pretensamente 'neutras' e reconhecidamente embasadas pelos valores públicos que orientaram o desenho da política ou programa." - <strong>Paulo Jannuzzi</strong>. (Ideal para discutir a metodologia de avaliação de políticas públicas e a importância da CIPI).
+                    </blockquote>
+                     <blockquote class="border-l-4 border-blue-500 pl-4 italic text-gray-700 mt-4">
+                        "A Constituição de 1988 instituiu um novo paradigma de políticas sociais ao reconhecer a cidadania como direito de todos e dever do Estado. Rompeu com a lógica da cidadania regulada, que condicionava o acesso a direitos à inserção formal no mercado de trabalho." (Síntese poderosa sobre a mudança fundamental trazida pela CF/88, base para qualquer discussão sobre proteção social).
+                    </blockquote>
+                `
+            },
+            {
+                title: 'Quiz Interativo',
+                content: `<p>Teste seus conhecimentos com as questões abaixo. Após responder, clique em "Verificar" para ver o gabarito e a explicação.</p>`
+            },
+            {
+                title: 'Provas Discursivas',
+                content: `<p>Aqui estão três exemplos de provas no formato discursivo, com duas perguntas cada. Elabore sua resposta e depois clique para ver o gabarito e um exemplo de resolução.</p>`
+            }
+        ],
+        flashcards: [],
+        quiz: [],
+        discursiveExams: [],
+
+        init() {
+            this.flashcards = [
+                { question: 'Qual a principal crítica do PGR à política de segurança do RJ no contexto da ADPF 635?', answer: 'A principal crítica é que a redução da letalidade policial deixou de ser um objetivo da polícia, pois foi retirada do sistema de metas (IDM) que gratifica os policiais, indicando que a política poderia priorizar o confronto e a violência letal.', flipped: false },
+                { question: 'Diferencie políticas universais e focalizadas, com exemplos.', answer: 'Políticas universais são para todos (ex: SUS, Educação Básica). Políticas focalizadas são para grupos específicos com critérios de elegibilidade, como renda (ex: Bolsa Família, BPC).', flipped: false },
+                { question: 'O que é "desvio de finalidade" em um ato administrativo?', answer: 'Ocorre quando um agente público pratica um ato visando um fim diferente daquele que a lei prevê para sua competência. É um vício objetivo que foca no resultado do ato, e não na intenção do agente.', flipped: false },
+                { question: 'Qual o papel das Comissões Intergestores (CIB e CIT) no federalismo brasileiro?', answer: 'São instâncias de pactuação, negociação e deliberação entre gestores dos três níveis de governo (União, Estados, Municípios) para coordenar políticas como o SUAS e o SUS, garantindo alinhamento e cooperação.', flipped: false },
+                { question: 'O que a ferramenta MaPR (Mapa de Processos e Resultados) busca descrever?', answer: 'Busca descrever a narrativa e a lógica causal de um programa, explicitando a relação entre recursos (insumos), atividades, produtos, resultados e impactos esperados.', flipped: false },
+                { question: 'Qual a mudança fundamental que a Constituição de 1988 trouxe para a proteção social?', answer: 'A CF/88 transformou a proteção social em um direito de cidadania e dever do Estado, criando a Seguridade Social (Saúde, Previdência, Assistência) e rompendo com o modelo anterior que atrelava direitos à condição de trabalhador formal.', flipped: false },
+            ];
+
+            this.quiz = [
+                { question: 'No contexto da ADPF 635, o que o Ministério Público Federal (PGR) criticou em relação ao sistema de metas da polícia do Rio de Janeiro?', options: ['A existência de metas muito altas de apreensão de drogas.', 'A retirada da meta de redução da letalidade policial do cálculo de bonificação.', 'A falta de metas para a redução de roubos de rua.', 'A inclusão de metas de satisfação da população.'], correct_answer: 'A retirada da meta de redução da letalidade policial do cálculo de bonificação.', user_answer: '', submitted: false, explanation: 'A crítica central do PGR foi que, ao remover a redução da letalidade do Índice de Desempenho de Metas (IDM), o governo sinalizou que a vida deixou de ser uma prioridade, incentivando a violência.' },
+                { question: 'Qual dos seguintes é o melhor exemplo de uma política social universal no Brasil?', options: ['Benefício de Prestação Continuada (BPC)', 'Programa Bolsa Família', 'Sistema Único de Saúde (SUS)', 'Cotas em universidades'], correct_answer: 'Sistema Único de Saúde (SUS)', user_answer: '', submitted: false, explanation: 'O SUS é o principal exemplo de política universal, pois se destina a atender toda a população brasileira, independentemente de contribuição ou renda. Os outros são exemplos de políticas focalizadas.' },
+                { question: 'A ferramenta de análise que examina as Instituições, os Atores políticos e as Ideias/Valores de uma política pública é chamada de:', options: ['MaPR', 'Análise SWOT', 'CIPI', 'Orçamento Base Zero'], correct_answer: 'CIPI', user_answer: '', submitted: false, explanation: 'CIPI é a sigla para Análise de Contexto Institucional, Político e Ideacional, uma ferramenta proposta por Paulo Jannuzzi para contextualizar a avaliação de políticas públicas.' },
+                { question: 'No federalismo cooperativo brasileiro, a execução direta dos serviços de assistência social (como os CRAS e CREAS) é, majoritariamente, uma responsabilidade de qual ente federado?', options: ['União', 'Estados', 'Distrito Federal', 'Municípios'], correct_answer: 'Municípios', user_answer: '', submitted: false, explanation: 'Na arquitetura do SUAS, os Municípios são os principais executores da política de assistência social na ponta, operando os serviços de proteção básica e especial, com cofinanciamento da União e dos Estados.' },
+                { question: 'O aumento expressivo do valor das emendas parlamentares e sua impositividade geram, segundo as fontes, um risco de:', options: ['Aumento da participação social direta.', 'Excesso de planejamento técnico pelo Executivo.', 'Desvio de finalidade e engessamento do orçamento.', 'Redução da corrupção sistêmica.'], correct_answer: 'Desvio de finalidade e engessamento do orçamento.', user_answer: '', submitted: false, explanation: 'A impositividade das emendas vincula uma grande parte do orçamento a decisões de parlamentares, o que reduz a margem de planejamento do Executivo e pode levar a gastos com critérios políticos, não técnicos, caracterizando um risco de "desvio de finalidade".' },
+                { question: 'A Constituição de 1988 estabeleceu o tripé da Seguridade Social, composto por:', options: ['Saúde, Educação e Trabalho.', 'Saúde, Previdência e Assistência Social.', 'Habitação, Saneamento e Transporte.', 'Segurança, Justiça e Cidadania.'], correct_answer: 'Saúde, Previdência e Assistência Social.', user_answer: '', submitted: false, explanation: 'O Art. 194 da Constituição define a Seguridade Social como um conjunto integrado de ações de iniciativa dos Poderes Públicos e da sociedade, destinadas a assegurar os direitos relativos à saúde, à previdência e à assistência social.' },
+                { question: 'Qual o objetivo da "intersetorialidade" nas políticas públicas?', options: ['Criar competição entre diferentes ministérios para melhorar a eficiência.', 'Focar cada política em seu setor específico para garantir especialização.', 'Articular diferentes políticas para responder de forma integrada a problemas complexos.', 'Centralizar todas as decisões em um único órgão gestor.'], correct_answer: 'Articular diferentes políticas para responder de forma integrada a problemas complexos.', user_answer: '', submitted: false, explanation: 'A intersetorialidade busca romper com a lógica fragmentada da gestão pública, promovendo a colaboração entre setores (saúde, educação, assistência social, etc.) para abordar problemas multifacetados como a pobreza.' },
+                { question: 'Segundo as fontes, o uso de helicópteros em operações policiais em áreas urbanas densas no Rio de Janeiro foi comparado pelo PGR a um:', options: ['Procedimento padrão de patrulhamento.', 'Exibição de força desnecessária.', '"Estado de guerra".', 'Modelo de policiamento comunitário.'], correct_answer: '"Estado de guerra".', user_answer: '', submitted: false, explanation: 'O PGR criticou duramente o uso rotineiro de plataformas aéreas em confrontos, equiparando a prática a um "estado de guerra", o que é incompatível com um Estado Democrático de Direito em tempos de paz.' },
+                { question: 'O que o conceito de "desfamiliarização" analisa em uma política social?', options: ['O grau em que a política promove a união familiar.', 'A medida em que os indivíduos podem acessar proteção social sem depender exclusivamente da família.', 'O impacto da política na redução do número de membros da família.', 'A capacidade da política de substituir a família pelo Estado.'], correct_answer: 'A medida em que os indivíduos podem acessar proteção social sem depender exclusivamente da família.', user_answer: '', submitted: false, explanation: 'Desfamiliarização refere-se à capacidade do Estado de prover serviços (como creches, cuidados a idosos) que reduzem a dependência dos indivíduos sobre o trabalho de cuidado não remunerado dentro da família, que historicamente recai sobre as mulheres.' },
+                { question: 'A criação do Sistema Único de Assistência Social (SUAS) foi marcada pela forte pactuação entre quais entes?', options: ['Apenas entre a União e os Estados.', 'Principalmente entre os Municípios e a União.', 'Entre o Judiciário e o Executivo.', 'Exclusivamente entre as OSCs e os Municípios.'], correct_answer: 'Principalmente entre os Municípios e a União.', user_answer: '', submitted: false, explanation: 'As fontes destacam que a consolidação do SUAS se deu pela forte parceria entre os municípios (executores) e o Ministério do Desenvolvimento Social (indutor e financiador), muitas vezes "apesar do Estado" (nível estadual), que por vezes teve um papel menos ativo.' },
+                { question: 'A utilização de indicadores quantitativos (ex: taxa de cobertura) e qualitativos (ex: satisfação do usuário) em uma avaliação é um exemplo de:', options: ['Focalização', 'Triangulação de evidências', 'Desvio de finalidade', 'Orçamento impositivo'], correct_answer: 'Triangulação de evidências', user_answer: '', submitted: false, explanation: 'Triangulação é o uso de múltiplas fontes de dados, métodos ou perspectivas para aumentar a robustez e a validade de uma análise. Combinar dados quantitativos e qualitativos é uma forma clássica de triangulação.' },
+                { question: 'A Lei Eloy Chaves, de 1923, é considerada um marco histórico para qual área da proteção social no Brasil?', options: ['Saúde Pública', 'Assistência Social', 'Educação Universal', 'Previdência Social'], correct_answer: 'Previdência Social', user_answer: '', submitted: false, explanation: 'A Lei Eloy Chaves é o marco fundador da Previdência Social no Brasil, ao criar as Caixas de Aposentadoria e Pensões (CAPs) para os trabalhadores das estradas de ferro.' },
+                { question: 'Qual dos desafios abaixo NÃO está diretamente associado às políticas focalizadas?', options: ['Risco de estigmatização dos beneficiários.', 'Dificuldade de definir e identificar o público-alvo.', 'Alto custo de manutenção para cobrir toda a população.', 'Criação de barreiras de acesso para grupos não elegíveis.'], correct_answer: 'Alto custo de manutenção para cobrir toda a população.', user_answer: '', submitted: false, explanation: 'O alto custo para cobrir toda a população é uma desvantagem associada às políticas universais. As políticas focalizadas, por definição, têm um custo menor, pois atendem apenas a um segmento específico.' },
+                { question: 'O que significa dizer que as estatísticas oficiais possuem um "poder simbólico"?', options: ['Que elas são sempre exatas e inquestionáveis.', 'Que elas podem ser usadas para definir a "normalidade" e o "desvio", influenciando a regulação social.', 'Que elas só têm valor em rituais e cerimônias.', 'Que seu custo de produção é apenas simbólico.'], correct_answer: 'Que elas podem ser usadas para definir a "normalidade" e o "desvio", influenciando a regulação social.', user_answer: '', submitted: false, explanation: 'O "poder simbólico" das estatísticas reside na sua capacidade de "coisificar" a realidade, transformando dados em verdades aparentes que moldam a percepção pública e as ações do Estado, definindo o que é normal ou problemático.' },
+                { question: 'O conceito de justiça que vai além da simples distribuição de recursos, incorporando o reconhecimento da diversidade e o combate a discriminações, é chamado de:', options: ['Justiça distributiva', 'Justiça retributiva', 'Justiça comutativa', 'Justiça relacional (ou densa)'], correct_answer: 'Justiça relacional (ou densa)', user_answer: '', submitted: false, explanation: 'Enquanto a justiça distributiva ("fina") foca na alocação de bens, a justiça relacional ("densa") amplia o escopo para incluir o reconhecimento de identidades, o respeito às diferenças e o combate a opressões culturais e simbólicas.' }
+            ];
+
+            this.discursiveExams = [
+                {
+                    prova: 1,
+                    questions: [
+                        {
+                            prompt: 'A Constituição de 1988 representou uma ruptura paradigmática para as políticas sociais no Brasil, instituindo o sistema de Seguridade Social. Com base nas fontes, (A) explique como os princípios da universalidade e da equidade orientam a organização das políticas sociais brasileiras, citando exemplos. (B) Discuta a tensão existente entre a implementação de políticas universais e a adoção de estratégias de focalização, abordando os riscos e benefícios de cada abordagem para a garantia de direitos.',
+                            answer: `
+                                <h5 class="font-bold mb-2">Gabarito e Exemplo de Resolução</h5>
+                                <p><strong>A) Princípios da Universalidade e Equidade:</strong></p>
+                                <p>A Constituição de 1988 redefiniu a cidadania como um direito de todos, e os princípios da universalidade e equidade são os pilares que orientam essa nova visão. O <strong>princípio da universalidade</strong> estabelece que certos direitos e serviços devem ser garantidos a toda a população, independentemente de contribuição, renda ou status. O maior exemplo é o Sistema Único de Saúde (SUS), que tem o dever de atender qualquer pessoa em território nacional. A educação básica também segue essa lógica. Esse princípio rompe com o modelo anterior de "cidadania regulada", que condicionava o acesso a direitos à inserção formal no mercado de trabalho.</p>
+                                <p>Já o <strong>princípio da equidade</strong> complementa o da universalidade, ao reconhecer que, para alcançar uma igualdade de fato, é preciso tratar os desiguais de forma desigual. Ele orienta políticas a darem mais a quem mais precisa, focando em grupos vulneráveis para corrigir injustiças históricas e estruturais. Políticas de assistência social, como o Benefício de Prestação Continuada (BPC) para idosos e pessoas com deficiência de baixa renda, e o Programa Bolsa Família, são exemplos de aplicação da equidade, pois utilizam critérios para direcionar recursos a quem enfrenta maiores privações.</p>
+                                <br>
+                                <p><strong>B) Tensão entre Universalismo e Focalização:</strong></p>
+                                <p>A tensão entre políticas universais e focalizadas é um dilema central na gestão pública. As <strong>políticas universais</strong>, como o SUS, têm como benefício a promoção da coesão social, o combate à estigmatização e a garantia de um patamar civilizatório comum. O risco, no entanto, é seu elevado custo de manutenção e a potencial ineficiência na alocação de recursos, que podem não chegar com a qualidade necessária aos mais pobres.</p>
+                                <p>Por outro lado, as <strong>políticas focalizadas</strong> são defendidas por sua eficiência alocativa, direcionando recursos escassos para quem mais necessita, com grande impacto na redução da pobreza extrema a um custo menor. O risco da focalização excessiva, contudo, é a <strong>fragmentação da proteção social</strong>, a estigmatização dos beneficiários (vistos como "dependentes" do Estado) e a criação de uma "cidadania precária", onde apenas os mais pobres têm acesso a certos benefícios, enquanto a classe média fica desassistida. O desafio do Brasil é, portanto, combinar a universalização de direitos com estratégias de equidade e focalização que sejam inclusivas e não criem barreiras, utilizando, por exemplo, as condicionalidades do Bolsa Família para fortalecer o acesso aos serviços universais de saúde e educação.</p>
+                            `,
+                            show_answer: false
+                        },
+                        {
+                            prompt: 'A atuação do poder público na segurança pública tem sido objeto de intenso debate e controle, como ilustra a ADPF 635. Com base nos documentos, (A) analise como a ausência de mecanismos de controle e transparência (como GPS em viaturas e relatórios de operações) pode levar a um "desvio de finalidade" na ação policial. (B) Discorra sobre a importância da intersetorialidade, articulando políticas de segurança com políticas de assistência social e educação para o enfrentamento da violência em territórios vulneráveis.',
+                            answer: `
+                                <h5 class="font-bold mb-2">Gabarito e Exemplo de Resolução</h5>
+                                <p><strong>A) Controle, Transparência e o Desvio de Finalidade:</strong></p>
+                                <p>O conceito de "desvio de finalidade" ocorre quando a administração pública utiliza suas prerrogativas para alcançar um objetivo diferente daquele previsto em lei. No contexto da segurança pública, cuja finalidade constitucional é a preservação da ordem pública e a proteção da vida e dos direitos, a ausência de mecanismos de controle e transparência cria um ambiente propício para que esse desvio ocorra. A não instalação de GPS e câmeras em viaturas, o sigilo de protocolos operacionais e a falta de relatórios circunstanciados após as operações, como apontado pelo PGR na ADPF 635, removem os freios institucionais que coíbem abusos. Sem a possibilidade de fiscalização e responsabilização, a ação policial pode se desviar de sua finalidade protetiva para uma lógica puramente repressiva e letal, onde o resultado (mortes, por exemplo) não é devidamente justificado nem auditado. A retirada da redução da letalidade das metas de desempenho é o exemplo máximo desse desvio: o Estado deixa de premiar a preservação da vida, abrindo margem para que a violência se torne um fim em si mesma, e não um meio excepcionalíssimo.</p>
+                                <br>
+                                <p><strong>B) A Importância da Intersetorialidade no Enfrentamento à Violência:</strong></p>
+                                <p>O enfrentamento eficaz da violência em territórios vulneráveis não pode se resumir à ação policial. Problemas complexos exigem respostas complexas, e é aqui que a <strong>intersetorialidade</strong> se torna fundamental. Uma abordagem puramente repressiva da segurança pública "enxuga gelo", pois não ataca as causas estruturais da violência e da criminalidade, como a pobreza, a evasão escolar e a falta de oportunidades. A articulação com a <strong>assistência social</strong>, através dos CRAS e CREAS, permite identificar famílias em risco, fortalecer vínculos comunitários e oferecer uma rede de proteção que pode prevenir a entrada de jovens no crime. A articulação com a <strong>educação</strong> é igualmente vital, garantindo a permanência de crianças e adolescentes na escola, oferecendo-lhes perspectivas de futuro. Uma política de segurança intersetorial, portanto, combina a atuação ostensiva (quando necessária e dentro da lei) com a prevenção social, entendendo que um território seguro é aquele onde os direitos sociais são garantidos e o Estado se faz presente não apenas com a polícia, mas com escolas, postos de saúde e oportunidades.</p>
+                            `,
+                            show_answer: false
+                        }
+                    ]
+                },
+                {
+                    prova: 2,
+                    questions: [
+                        {
+                            prompt: 'O federalismo brasileiro descentralizou competências, mas também gerou desafios de coordenação e desigualdades. (A) Discuta como os instrumentos de coordenação intergovernamental (financeiros, normativos, organizacionais) são utilizados para alinhar as políticas sociais no Brasil, usando o SUAS como exemplo. (B) Analise como a impositividade crescente das emendas parlamentares pode impactar negativamente o planejamento e a execução de políticas públicas baseadas em evidências.',
+                            answer: `
+                                <h5 class="font-bold mb-2">Gabarito e Exemplo de Resolução</h5>
+                                <p><strong>A) Instrumentos de Coordenação Federativa no SUAS:</strong></p>
+                                <p>O federalismo brasileiro, após a CF/88, exige uma coordenação robusta para que as políticas sociais sejam implementadas de forma coesa. O Sistema Único de Assistência Social (SUAS) é um caso exemplar de como essa coordenação funciona na prática. O governo federal utiliza um conjunto de instrumentos para alinhar estados e municípios. Os <strong>instrumentos financeiros</strong>, como os repasses fundo a fundo, são cruciais, pois cofinanciam a estrutura (CRAS/CREAS) e incentivam a adesão dos municípios às normas nacionais. Os <strong>instrumentos normativos</strong>, como a Política Nacional de Assistência Social (PNAS) e a Norma Operacional Básica (NOB-SUAS), estabelecem as regras do jogo, definindo competências, serviços e padrões de atendimento em todo o país. Por fim, os <strong>instrumentos organizacionais</strong> são as arenas de pactuação, como a Comissão Intergestores Tripartite (CIT) e as Bipartites (CIB), onde gestores dos três níveis negociam e deliberam sobre a operacionalização do sistema. Essa combinação de incentivo financeiro, regulação e pactuação política permitiu a capilaridade e a padronização do SUAS em um país continental e desigual.</p>
+                                <br>
+                                <p><strong>B) Impacto das Emendas Impositivas no Planejamento:</strong></p>
+                                <p>A crescente impositividade das emendas parlamentares representa uma ameaça direta ao planejamento de políticas públicas baseado em evidências. A gestão pública moderna busca alocar recursos de forma racional, utilizando ferramentas como o MaPR, diagnósticos e avaliações para identificar prioridades e desenhar intervenções eficazes. Esse modelo técnico-científico visa a otimização dos gastos e o alcance de resultados estratégicos. As emendas impositivas, no entanto, subvertem essa lógica. Elas destinam uma parcela significativa e crescente do orçamento para finalidades definidas por critérios políticos e eleitorais, muitas vezes sem aderência ao planejamento setorial do Executivo. Isso resulta na <strong>fragmentação das políticas</strong>, com recursos pulverizados em pequenas obras ou ações pontuais ("construção de um posto de saúde") que não necessariamente dialogam com a estratégia nacional. Além disso, <strong>engessa o orçamento</strong>, reduzindo a capacidade do governo de responder a emergências ou de investir em projetos estruturantes de longo prazo, minando a coerência e a efetividade da ação estatal.</p>
+                            `,
+                            show_answer: false
+                        },
+                        {
+                            prompt: 'A gestão pública contemporânea exige o uso de dados e evidências para a tomada de decisão. (A) Diferencie monitoramento e avaliação de políticas públicas, explicando a função de cada um no ciclo da política. (B) Discorra sobre a importância da desagregação de indicadores (por raça/cor, gênero, território) para a promoção da equidade, apontando os desafios para sua efetivação no Brasil.',
+                            answer: `
+                                <h5 class="font-bold mb-2">Gabarito e Exemplo de Resolução</h5>
+                                <p><strong>A) Diferença entre Monitoramento e Avaliação:</strong></p>
+                                <p>Embora relacionados, monitoramento e avaliação são processos distintos com funções complementares. O <strong>monitoramento</strong> é um processo <strong>contínuo e sistemático</strong>, realizado durante a implementação da política. Sua função é acompanhar a execução das atividades e o uso dos recursos, verificando se as metas de processo e produto estão sendo alcançadas (ex: número de famílias atendidas, número de visitas realizadas). Ele funciona como um "termômetro", fornecendo informações gerenciais em tempo real para corrigir rotas e garantir que o planejado está sendo entregue. A <strong>avaliação</strong>, por sua vez, é um processo <strong>periódico e aprofundado</strong>, que busca aferir os efeitos da política. Sua função é responder se a intervenção produziu os resultados e impactos desejados e por quê. Ela vai além da entrega, analisando a cadeia causal e buscando entender as transformações geradas no público-alvo (ex: a política reduziu a pobreza? melhorou a saúde?). A avaliação funciona como um "diagnóstico complexo", fornecendo aprendizados para redesenhar a política ou decidir sobre sua continuidade.</p>
+                                <br>
+                                <p><strong>B) Desagregação de Indicadores para a Equidade:</strong></p>
+                                <p>A desagregação de indicadores é a sua apresentação para grupos populacionais específicos (por raça/cor, gênero, território, deficiência, etc.). Sua importância é imensa para a promoção da equidade, pois ela permite <strong>descortinar desigualdades</strong> que ficam ocultas em dados agregados. Por exemplo, um indicador nacional de acesso à saúde pode parecer positivo, mas ao ser desagregado, pode revelar que mulheres negras em territórios periféricos enfrentam barreiras muito maiores. Ao tornar essas disparidades visíveis, a desagregação permite que o Estado formule políticas públicas mais justas e eficazes, ajustando estratégias para atender às necessidades específicas de cada grupo e, assim, efetivar o princípio da equidade. Os desafios para sua implementação no Brasil são significativos. Incluem a <strong>complexidade da coleta</strong> (como definir e perguntar sobre raça/cor), a <strong>falta de padronização</strong> em registros administrativos, e a <strong>inércia institucional</strong>. Superar esses obstáculos exige investimento em sistemas de informação, capacitação de equipes e um compromisso político com o reconhecimento e enfrentamento das desigualdades estruturais do país.</p>
+                            `,
+                            show_answer: false
+                        }
+                    ]
+                },
+                 {
+                    prova: 3,
+                    questions: [
+                        {
+                            prompt: 'A transformação digital é um tema central na modernização do Estado, enquanto as Organizações da Sociedade Civil (OSCs) são atores históricos na execução de políticas sociais. (A) Discuta como a transformação digital, orientada por princípios éticos e de inclusão como os defendidos por Audrey Tang, pode contribuir para um Estado mais inclusivo. (B) Analise o papel das OSCs na proteção social brasileira, abordando os benefícios e os riscos da parceria entre Estado e terceiro setor.',
+                            answer: `
+                                <h5 class="font-bold mb-2">Gabarito e Exemplo de Resolução</h5>
+                                <p><strong>A) Transformação Digital para um Estado Inclusivo:</strong></p>
+                                <p>A transformação digital, quando orientada por princípios éticos, pode ser uma poderosa ferramenta para um Estado mais inclusivo. Sob a ótica de Audrey Tang, a tecnologia não deve ser um fim em si mesma, mas um meio para atender às necessidades da sociedade. Isso significa desenhar serviços públicos digitais que sejam <strong>acessíveis</strong> a todos, incluindo pessoas com deficiência, idosos e populações com baixo letramento digital. A <strong>interoperabilidade</strong> de sistemas (ex: integração do Cadastro Único com outros serviços) evita que o cidadão precise repetir informações, simplificando o acesso a direitos. A política de <strong>dados abertos</strong> aumenta a transparência e o controle social. Além disso, o uso ético da inteligência artificial, com base no princípio da <strong>não discriminação</strong>, é fundamental para evitar que algoritmos reproduzam e amplifiquem preconceitos existentes na sociedade. Em suma, uma transformação digital inclusiva utiliza a tecnologia para reduzir barreiras, personalizar serviços e garantir que ninguém seja deixado para trás na transição para uma governança digital.</p>
+                                <br>
+                                <p><strong>B) O Papel das OSCs: Benefícios e Riscos da Parceria:</strong></p>
+                                <p>As Organizações da Sociedade Civil (OSCs) desempenham um papel histórico e fundamental na proteção social brasileira. O principal <strong>benefício</strong> de sua atuação é a <strong>capilaridade</strong>: elas frequentemente chegam a territórios e públicos onde o Estado tem dificuldade de atuar, prestando serviços com maior proximidade e conhecimento da realidade local. As OSCs também podem inovar em metodologias e fomentar a participação comunitária. A parceria com o Estado, regulada pelo Marco Regulatório das OSCs (Lei 13.019/2014), permite ampliar a oferta de serviços públicos de forma complementar à ação estatal.</p>
+                                <p>Contudo, essa parceria apresenta <strong>riscos</strong>. Um deles é a <strong>perda de responsabilidade estatal</strong>, onde o Estado "terceiriza" excessivamente suas funções, eximindo-se de seu dever constitucional. Outro risco é a <strong>precarização do trabalho</strong> e a dependência financeira das OSCs em relação aos repasses públicos, o que pode comprometer sua autonomia. Por fim, sem critérios claros de seleção e fiscalização rigorosa, a parceria pode levar à fragmentação da política e à baixa qualidade dos serviços. Para que a colaboração seja benéfica, é necessário um Estado forte que regule, financie adequadamente e monitore as parcerias, garantindo que elas contribuam para a universalização de direitos e não para sua privatização disfarçada.</p>
+                            `,
+                            show_answer: false
+                        },
+                        {
+                            prompt: 'Problemas sociais complexos, como a evasão escolar de jovens em territórios vulneráveis ou a falta de acesso à saúde mental para mulheres chefes de família em áreas rurais, exigem intervenções bem estruturadas. (A) Utilizando a ferramenta CIPI (Cenário, Intervenção, Pressupostos, Indicadores), estruture uma proposta de intervenção para um desses dois problemas. (B) Explique a importância de se definir indicadores de processo e de resultado para acompanhar a ação proposta.',
+                            answer: `
+                                <h5 class="font-bold mb-2">Gabarito e Exemplo de Resolução (para o problema da evasão escolar)</h5>
+                                <p><strong>A) Estrutura da Intervenção com CIPI (Evasão Escolar):</strong></p>
+                                <ul>
+                                    <li><strong>Cenário:</strong> Em um município de médio porte, há uma alta taxa (37%) de evasão escolar entre jovens de 15 a 17 anos em territórios de alta vulnerabilidade. As causas são multifatoriais: transporte público precário e inseguro, necessidade de inserção precoce no mercado de trabalho e desmotivação com o ambiente escolar. A rede de proteção social (assistência social, saúde) atua de forma fragmentada e desarticulada da educação.</li>
+                                    <li><strong>Intervenção:</strong> Criação do programa intersetorial "Jovem Presente", articulando as secretarias de Educação, Assistência Social, Segurança e Transporte. As ações incluiriam: (1) Oferta de passe livre estudantil para áreas de risco; (2) Concessão de uma bolsa-permanência condicionada à frequência e desempenho escolar; (3) Atendimento psicossocial e programas de mediação de conflitos nas escolas; (4) Patrulha escolar para aumentar a segurança nos trajetos.</li>
+                                    <li><strong>Pressupostos:</strong> Compromisso político e pactuação formal entre as secretarias envolvidas; diagnóstico territorial para identificar áreas prioritárias; financiamento estável e compartilhado; fortalecimento do SUAS para acompanhamento familiar.</li>
+                                    <li><strong>Indicadores:</strong> (1) Taxa de evasão escolar nos territórios atendidos (indicador de resultado). (2) Percentual de alunos beneficiados com frequência mensal igual ou superior a 85% (indicador de processo/resultado imediato).</li>
+                                </ul>
+                                <br>
+                                <p><strong>B) Importância dos Indicadores de Processo e Resultado:</strong></p>
+                                <p>A definição de diferentes tipos de indicadores é crucial para uma gestão eficaz da intervenção. Os <strong>indicadores de processo</strong> são essenciais para o monitoramento da implementação. No caso do programa "Jovem Presente", um indicador de processo como o "número de passes livres distribuídos" ou o "percentual de alunos com frequência acima de 85%" permite à gestão saber se as atividades estão sendo executadas como planejado e se estão chegando ao público-alvo. Ele ajuda a identificar gargalos operacionais (ex: os alunos não estão conseguindo se cadastrar para a bolsa?) e a fazer ajustes em tempo real.</p>
+                                <p>Já os <strong>indicadores de resultado</strong> são fundamentais para a avaliação, pois medem se a intervenção está alcançando seu objetivo principal. A "taxa de evasão escolar nos territórios atendidos" é o indicador de resultado final. Acompanhá-lo mostra se a combinação de ações (bolsa, passe livre, segurança) está, de fato, gerando a transformação esperada: a permanência do jovem na escola. Sem o indicador de resultado, não saberíamos se o programa é efetivo; sem os de processo, não saberíamos por que ele falhou ou teve sucesso. A combinação de ambos garante uma gestão por resultados, transparente e capaz de aprender com a própria prática.</p>
+                            `,
+                            show_answer: false
+                        }
+                    ]
+                }
+            ];
+        },
+        toggleAccordion(index) {
+            if (this.openAccordions.includes(index)) {
+                this.openAccordions = this.openAccordions.filter(i => i !== index);
+            } else {
+                this.openAccordions.push(index);
+            }
+        },
+        scrollToSection(index) {
+            const el = document.getElementById('section-' + index);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                 if (!this.openAccordions.includes(index)) {
+                    this.openAccordions.push(index);
+                }
+            }
+        },
+        submitQuizAnswer(index) {
+            this.quiz[index].submitted = true;
+        },
+        quizScore: 0,
+        quizSubmitted: false,
+        submitAllQuiz() {
+            let score = 0;
+            this.quiz.forEach((q, i) => {
+                this.submitQuizAnswer(i);
+                if(q.user_answer === q.correct_answer) {
+                    score++;
+                }
+            });
+            this.quizScore = score;
+            this.quizSubmitted = true;
+        },
+        resetQuiz(){
+            this.quiz.forEach(q => {
+                q.user_answer = '';
+                q.submitted = false;
+            });
+            this.quizScore = 0;
+            this.quizSubmitted = false;
+        }
+
+    }));
+});
+</script>
+
+</body>
+</html>
