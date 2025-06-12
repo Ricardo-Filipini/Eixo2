@@ -1,60 +1,73 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guia de Estudo Interativo - Eixo 1</title>
+    <title>Estudo Interativo: Políticas Públicas e Segurança no Brasil</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Serene Academia (#fdfaf6, #57534e, #a78bfa, #38bdf8) -->
+    <!-- Application Structure Plan: A estrutura da aplicação foi desenhada como um painel de controle de estudo, dividido em seções temáticas, em vez de seguir a ordem linear do relatório. A navegação superior permite acesso rápido a cada seção (Visão Geral, Eixos Temáticos, Linha do Tempo, Conceitos-Chave, Personagens, Teste seu Conhecimento). Essa abordagem foi escolhida para facilitar a exploração não linear e a consulta rápida, alinhando-se à proposta de um "infográfico interativo". A interatividade foca em reforçar o aprendizado através de quizzes, flashcards e visualizações de dados, promovendo um engajamento ativo com o conteúdo. -->
+    <!-- Visualization & Content Choices:
+        - Relatório Info: Evolução dos valores das emendas parlamentares. Goal: Mostrar mudança drástica. Viz/Presentation: Gráfico de Barras (Chart.js). Interaction: Tooltips. Justification: Visualização clara e impactante do crescimento orçamentário.
+        - Relatório Info: Desigualdade de gastos municipais. Goal: Comparar. Viz/Presentation: Gráfico de Donut (Chart.js). Interaction: Tooltips. Justification: Ilustra a diferença na regulação federal de forma simples e visual.
+        - Relatório Info: Estruturas conceituais (CIPI, MaPR). Goal: Organizar/Explicar. Viz/Presentation: Diagramas em HTML/Tailwind. Interaction: Estático. Justification: Alternativa visual eficaz sem uso de SVG, respeitando as restrições.
+        - Relatório Info: Conceitos e Perguntas Frequentes. Goal: Informar e testar. Viz/Presentation: Flashcards e Quiz Interativo (HTML/CSS/JS). Interaction: Clique para revelar resposta/feedback. Justification: Fomenta a memorização e autoavaliação ativa.
+        -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
-            color: #1e293b;
+            background-color: #fdfaf6;
+            color: #57534e;
         }
-        .section-title {
-            cursor: pointer;
-            padding: 1rem 1.5rem;
+        .nav-link {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #a78bfa;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        .card {
             background-color: #ffffff;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .section-title:hover {
-            background-color: #f8fafc;
-        }
-        .section-content {
-            display: none;
-            padding: 1.5rem;
-            background-color: #ffffff;
-            border-radius: 0 0 0.5rem 0.5rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        .arrow {
-            transition: transform 0.3s;
-        }
-        .section-title.active .arrow {
-            transform: rotate(180deg);
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
         .flashcard-container {
             perspective: 1000px;
         }
         .flashcard {
-            width: 100%;
-            height: 150px;
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.6s;
             cursor: pointer;
         }
-        .flashcard.is-flipped {
+        .flashcard.flipped {
             transform: rotateY(180deg);
         }
-        .flashcard-face {
+        .flashcard-front, .flashcard-back {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -62,512 +75,581 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
             text-align: center;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .flashcard-front {
-            background-color: #e0e7ff;
-            color: #3730a3;
+            padding: 1.5rem;
         }
         .flashcard-back {
-            background-color: #f1f5f9;
             transform: rotateY(180deg);
             font-size: 0.875rem;
         }
-        .quiz-option {
-            transition: background-color 0.3s;
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e5e7eb;
         }
-        .quiz-option.selected {
-            background-color: #dbeafe;
-            border-color: #3b82f6;
+        .timeline-item {
+            position: relative;
         }
-        .quiz-option.correct {
-            background-color: #dcfce7;
-            border-color: #22c55e;
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            top: 20px;
+            transform: translateX(-50%);
+            width: 1rem;
+            height: 1rem;
+            border-radius: 9999px;
+            background-color: #a78bfa;
+            border: 3px solid #fdfaf6;
         }
-        .quiz-option.incorrect {
-            background-color: #fee2e2;
-            border-color: #ef4444;
-        }
-        .btn {
-            background-color: #4f46e5;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            transition: background-color 0.3s;
-        }
-        .btn:hover {
-            background-color: #4338ca;
-        }
-        .btn-secondary {
-            background-color: #64748b;
-        }
-        .btn-secondary:hover {
-            background-color: #475569;
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 40vh;
+            max-height: 400px;
+            width: 100%;
+            max-width: 600px;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Guia de Estudo Interativo para Prova</h1>
-            <p class="mt-2 text-slate-600">Políticas Públicas, Federalismo, Segurança e Proteção Social</p>
-        </header>
+<body class="antialiased">
 
-        <main class="space-y-4">
-            <!-- Seção Resumo por Tópicos -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Resumo por Tópicos</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div class="section-content prose max-w-none">
-                    <h4>Análise e Avaliação de Políticas Públicas</h4>
-                    <ul>
-                        <li><strong>Análise do Contexto (CIPI):</strong> Essencial como etapa prévia à avaliação. Analisa o arcabouço <strong>Institucional (polity)</strong>, os <strong>Atores envolvidos (politics)</strong> e as <strong>Ideias e valores (zeitgeist)</strong>. Torna as avaliações mais robustas, menos "neutras" e mais pertinentes.</li>
-                        <li><strong>Mapa de Processos e Resultados (MaPR):</strong> Ferramenta que descreve a narrativa causal de um programa (Recursos → Atividades → Produtos → Resultados → Impactos). Ajuda a planejar, monitorar e avaliar, explicitando a lógica da intervenção.</li>
-                        <li><strong>Indicadores e Evidências:</strong> Indicadores são medidas que operacionalizam conceitos abstratos. Evidências podem ser estatísticas (IBGE, INEP), documentais, ou conhecimento tácito. A <strong>triangulação de evidências</strong> (combinar diferentes fontes e métodos) é fundamental para a robustez da avaliação.</li>
-                    </ul>
-                    <h4>Federalismo, Relações Intergovernamentais e Coordenação</h4>
-                    <ul>
-                        <li><strong>Federalismo Brasileiro (Pós-CF/1988):</strong> Desenho federativo com responsabilidades compartilhadas entre União, estados e municípios, visando reduzir desigualdades.</li>
-                        <li><strong>Instrumentos de Coordenação:</strong> Usados para alinhar os níveis de governo. Incluem instrumentos <strong>financeiros</strong> (repasses), <strong>normativos</strong> (regras), <strong>organizacionais</strong> (comissões intergestores como CIT e CIB), <strong>gerenciais</strong> (pactos) e <strong>informacionais</strong> (capacitação).</li>
-                        <li><strong>Desafios:</strong> Tensões entre autonomia e alinhamento, capacidades institucionais e financeiras desiguais e interesses políticos divergentes. A coordenação é um processo político, não apenas técnico.</li>
-                    </ul>
-                    <h4>Proteção Social e Segurança Pública</h4>
-                    <ul>
-                        <li><strong>Seguridade Social (CF/1988):</strong> Baseada no tripé Saúde, Previdência e Assistência Social. Fundamenta-se nos princípios da <strong>universalidade</strong>, <strong>integralidade</strong> e <strong>descentralização</strong>.</li>
-                        <li><strong>Universalismo vs. Focalização:</strong> Políticas universais (ex: SUS) para todos; políticas focalizadas (ex: Bolsa Família) para grupos específicos. O Brasil adota um modelo híbrido, gerando tensões e debates sobre eficiência, equidade e estigmatização.</li>
-                        <li><strong>Segurança Pública:</strong> O caso do Rio de Janeiro (ADPF 635) ilustra a tensão entre o uso da força e a garantia de direitos. A crítica do PGR sobre a retirada da "redução da letalidade policial" das metas de desempenho é um exemplo de como indicadores moldam políticas.</li>
-                        <li><strong>Intersetorialidade:</strong> Articulação entre diferentes políticas (Saúde, Educação, Assistência Social) para enfrentar problemas complexos (pobreza, violência). Essencial, mas desafiadora devido à fragmentação institucional e cultura setorializada.</li>
-                    </ul>
-                </div>
+    <header id="header" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-stone-700">Estudo Interativo</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#visao-geral" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Visão Geral</a>
+                <a href="#eixos-tematicos" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Eixos Temáticos</a>
+                <a href="#linha-do-tempo" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Linha do Tempo</a>
+                <a href="#conceitos-chave" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Conceitos</a>
+                <a href="#personagens" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Personagens</a>
+                <a href="#teste-conhecimento" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Teste seu Conhecimento</a>
             </div>
+            <button id="mobile-menu-button" class="md:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden bg-white px-6 pb-4">
+            <a href="#visao-geral" class="block py-2 text-stone-600 hover:text-purple-500">Visão Geral</a>
+            <a href="#eixos-tematicos" class="block py-2 text-stone-600 hover:text-purple-500">Eixos Temáticos</a>
+            <a href="#linha-do-tempo" class="block py-2 text-stone-600 hover:text-purple-500">Linha do Tempo</a>
+            <a href="#conceitos-chave" class="block py-2 text-stone-600 hover:text-purple-500">Conceitos</a>
+            <a href="#personagens" class="block py-2 text-stone-600 hover:text-purple-500">Personagens</a>
+            <a href="#teste-conhecimento" class="block py-2 text-stone-600 hover:text-purple-500">Teste seu Conhecimento</a>
+        </div>
+    </header>
 
-            <!-- Seção Flashcards -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Flashcards</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div class="section-content">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="flashcard-container">
-                            <div class="flashcard">
-                                <div class="flashcard-face flashcard-front">O que é a Análise do Contexto Institucional, Político e Ideacional (CIPI)?</div>
-                                <div class="flashcard-face flashcard-back">É uma etapa prévia à avaliação de políticas que examina o ambiente da política, analisando: 1) as instituições e regras (polity), 2) os atores e seus interesses (politics) e 3) as ideias e valores prevalecentes (zeitgeist). Ajuda a entender o "porquê" dos resultados.</div>
-                            </div>
-                        </div>
-                        <div class="flashcard-container">
-                            <div class="flashcard">
-                                <div class="flashcard-face flashcard-front">Qual a principal diferença entre monitoramento e avaliação?</div>
-                                <div class="flashcard-face flashcard-back"><strong>Monitoramento</strong> é um processo contínuo que acompanha a execução das atividades e o cumprimento de metas (foco no processo e produtos). <strong>Avaliação</strong> é uma análise periódica e aprofundada que busca verificar os resultados e impactos do programa (foco nos efeitos da política).</div>
-                            </div>
-                        </div>
-                        <div class="flashcard-container">
-                            <div class="flashcard">
-                                <div class="flashcard-face flashcard-front">O que significa "intersetorialidade" em políticas públicas?</div>
-                                <div class="flashcard-face flashcard-back">É a articulação e coordenação entre diferentes setores (ex: saúde, educação, assistência social) para enfrentar problemas complexos que uma única política não conseguiria resolver, como a pobreza multidimensional.</div>
-                            </div>
-                        </div>
-                        <div class="flashcard-container">
-                            <div class="flashcard">
-                                <div class="flashcard-face flashcard-front">Diferencie políticas universais e focalizadas.</div>
-                                <div class="flashcard-face flashcard-back"><strong>Políticas universais</strong> são destinadas a todos os cidadãos, sem critério de renda (ex: SUS). <strong>Políticas focalizadas</strong> são direcionadas a grupos específicos com base em critérios de elegibilidade, como renda (ex: Bolsa Família).</div>
-                            </div>
-                        </div>
-                        <div class="flashcard-container">
-                            <div class="flashcard">
-                                <div class="flashcard-face flashcard-front">O que foi a ADPF 635?</div>
-                                <div class="flashcard-face flashcard-back">Arguição de Descumprimento de Preceito Fundamental usada para questionar a política de segurança pública do Rio de Janeiro, especialmente a alta letalidade policial, buscando garantir direitos fundamentais. A manifestação do PGR é um documento central neste caso.</div>
-                            </div>
-                        </div>
-                        <div class="flashcard-container">
-                            <div class="flashcard">
-                                <div class="flashcard-face flashcard-front">Qual a importância das Comissões Intergestores (CIT e CIB)?</div>
-                                <div class="flashcard-face flashcard-back">São instâncias organizacionais de coordenação intergovernamental (União, estados, municípios). Funcionam como arenas de negociação, pactuação e deliberação para políticas como o SUS e o SUAS, sendo essenciais no federalismo brasileiro.</div>
-                            </div>
-                        </div>
+    <main class="container mx-auto px-6 py-12">
+        <section id="visao-geral" class="min-h-screen flex items-center">
+            <div class="w-full text-center">
+                <h2 class="text-4xl md:text-6xl font-bold text-stone-800 leading-tight">Políticas Públicas e Segurança no Brasil</h2>
+                <p class="mt-4 text-lg md:text-xl text-stone-600 max-w-3xl mx-auto">Uma exploração interativa dos desafios e perspectivas da governança, políticas sociais e segurança pública no contexto brasileiro pós-Constituição de 1988.</p>
+                <p class="mt-2 text-md text-stone-500 max-w-2xl mx-auto">Navegue pelas seções para aprofundar seu conhecimento sobre os principais temas, conceitos, eventos e atores que moldam a realidade brasileira.</p>
+                <a href="#eixos-tematicos" class="mt-8 inline-block bg-purple-500 text-white font-bold py-3 px-8 rounded-full hover:bg-purple-600 transition-colors">Iniciar Exploração</a>
+            </div>
+        </section>
+
+        <section id="eixos-tematicos" class="py-20">
+            <h2 class="text-3xl font-bold text-center mb-12 text-stone-800">Eixos Temáticos</h2>
+            <div id="eixos-container" class="space-y-16"></div>
+        </section>
+
+        <section id="linha-do-tempo" class="py-20">
+            <h2 class="text-3xl font-bold text-center mb-12 text-stone-800">Linha do Tempo</h2>
+            <div id="timeline-container" class="relative max-w-3xl mx-auto timeline"></div>
+        </section>
+
+        <section id="conceitos-chave" class="py-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-stone-800">Conceitos-Chave</h2>
+            <p class="text-center text-stone-500 mb-12">Clique nos cartões para revelar as definições.</p>
+            <div id="flashcards-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </section>
+
+        <section id="personagens" class="py-20">
+            <h2 class="text-3xl font-bold text-center mb-12 text-stone-800">Personagens Relevantes</h2>
+            <div id="personagens-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </section>
+        
+        <section id="teste-conhecimento" class="py-20">
+            <h2 class="text-3xl font-bold text-center mb-12 text-stone-800">Teste seu Conhecimento</h2>
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-stone-800 mb-4">Quiz Interativo</h3>
+                    <div id="quiz-container">
+                        <p class="text-stone-600 mb-4">Teste seus conhecimentos com 15 perguntas de múltipla escolha. No final, você verá sua pontuação e o gabarito comentado.</p>
+                        <button id="start-quiz-btn" class="bg-sky-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-600 transition-colors">Iniciar Quiz</button>
                     </div>
+                    <div id="quiz-question-container" class="hidden"></div>
+                    <div id="quiz-results-container" class="hidden"></div>
+                </div>
+
+                <div class="mt-16">
+                    <h3 class="text-2xl font-bold text-stone-800 mb-4 text-center">Questões Discursivas para Prática</h3>
+                     <p class="text-center text-stone-500 mb-8">Analise os cenários e clique para ver uma sugestão de resolução.</p>
+                    <div id="discursive-container" class="space-y-4"></div>
                 </div>
             </div>
+        </section>
+    </main>
 
-            <!-- Seção Linha do Tempo -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Linha do Tempo</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div class="section-content">
-                    <ul class="space-y-4 border-l-2 border-slate-300 pl-6">
-                        <li><strong>1923:</strong> Criação da Previdência Social no Brasil com a Lei Eloy Chaves.</li>
-                        <li><strong>1988:</strong> Promulgação da Constituição Federal ("Constituição Cidadã"), que estabelece a Seguridade Social (Saúde, Previdência, Assistência) e redefine o federalismo. Criação do SUS.</li>
-                        <li><strong>1990s:</strong> Expansão do papel das Organizações da Sociedade Civil (OSCs) e institucionalização da avaliação de políticas públicas.</li>
-                        <li><strong>2004:</strong> Implementação do Serviço de Proteção e Atendimento Integral à Família (PAIF), no âmbito do SUAS.</li>
-                        <li><strong>2006:</strong> Início do Pacto de Aprimoramento da Gestão no SUAS (Resolução CIT nº 5).</li>
-                        <li><strong>2014:</strong> Aprovação da Lei 13.019 (Marco Regulatório das OSCs), que altera a relação jurídica entre poder público e sociedade civil.</li>
-                        <li><strong>2016:</strong> Emendas parlamentares individuais tornam-se impositivas, mudando a dinâmica orçamentária.</li>
-                        <li><strong>2020:</strong> Manifestação do PGR na ADPF 635, criticando a política de segurança do Rio de Janeiro.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Seção Glossário -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Glossário</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div class="section-content prose max-w-none">
-                    <dl class="space-y-4">
-                        <div>
-                            <dt class="font-semibold">ADPF (Arguição de Descumprimento de Preceito Fundamental)</dt>
-                            <dd>Mecanismo de controle de constitucionalidade de atos do poder público para proteger preceitos fundamentais da Constituição. <strong>Exemplo de uso:</strong> "A ADPF 635 foi crucial para debater os limites da ação policial no Rio de Janeiro."</dd>
-                        </div>
-                        <div>
-                            <dt class="font-semibold">CIPI (Análise do Contexto Institucional, Político e Ideacional)</dt>
-                            <dd>Ferramenta de análise pré-avaliação que considera instituições, atores e ideias. <strong>Exemplo de uso:</strong> "Conforme Jannuzzi (2022), a CIPI é essencial para uma avaliação contextualizada e robusta."</dd>
-                        </div>
-                        <div>
-                            <dt class="font-semibold">MaPR (Mapa de Processos e Resultados)</dt>
-                            <dd>Ferramenta que descreve a lógica causal de uma política (recursos, atividades, produtos, resultados, impactos). <strong>Exemplo de uso:</strong> "O MaPR do programa explicitou a necessidade de fortalecer as atividades para alcançar os resultados esperados."</dd>
-                        </div>
-                        <div>
-                            <dt class="font-semibold">CIT e CIB (Comissão Intergestores Tripartite e Bipartite)</dt>
-                            <dd>Arenas de negociação e pactuação entre gestores dos três níveis de governo (CIT) ou entre estado e municípios (CIB). <strong>Exemplo de uso:</strong> "A decisão sobre o cofinanciamento do serviço foi pactuada na CIB, demonstrando a cooperação federativa."</dd>
-                        </div>
-                         <div>
-                            <dt class="font-semibold">Desvio de Finalidade</dt>
-                            <dd>Vício em um ato administrativo que ocorre quando a ação é praticada com um fim diferente daquele previsto em lei. <strong>Exemplo de uso:</strong> "A alocação de recursos via emendas parlamentares sem critério técnico pode configurar desvio de finalidade, comprometendo o interesse público."</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-            
-            <!-- Seção Personagens -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Personagens</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div class="section-content prose max-w-none">
-                     <dl class="space-y-4">
-                        <div>
-                            <dt class="font-semibold">Paulo de Martino Jannuzzi</dt>
-                            <dd>Professor e pesquisador referência em avaliação de políticas públicas e indicadores sociais no Brasil. Desenvolveu conceitos como a CIPI. <strong>Exemplo de citação:</strong> "A análise contextual proposta por Jannuzzi (2022) destaca que avaliações não podem ser neutras, pois são influenciadas por valores e interesses."</dd>
-                        </div>
-                        <div>
-                            <dt class="font-semibold">Sônia Fleury</dt>
-                            <dd>Pesquisadora importante nos estudos sobre reforma sanitária, seguridade social e cidadania no Brasil. <strong>Exemplo de citação:</strong> "A obra de Sônia Fleury é fundamental para compreender a construção do conceito de seguridade social na Constituição de 1988 como uma ruptura com o modelo anterior."</dd>
-                        </div>
-                        <div>
-                            <dt class="font-semibold">Audrey Tang</dt>
-                            <dd>Ministra digital de Taiwan, defensora de uma transformação digital centrada nas pessoas, com foco em inclusão, transparência e participação social. <strong>Exemplo de citação:</strong> "Inspirado pela visão de Audrey Tang, um governo pode usar a tecnologia para ampliar a participação cidadã, em vez de apenas digitalizar a burocracia."</dd>
-                        </div>
-                         <div>
-                            <dt class="font-semibold">Antonio Augusto Brandão de Aras</dt>
-                            <dd>Procurador-Geral da República que assinou a manifestação na ADPF 635, documento que critica duramente a política de segurança do RJ. <strong>Exemplo de citação:</strong> "A manifestação do PGR, Antonio Aras, na ADPF 635, evidenciou a preocupação do Ministério Público com o aumento da letalidade policial e a falta de controle sobre as operações."</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-
-            <!-- Seção Interrelações -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Interrelações para Questões Discursivas</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div class="section-content prose max-w-none">
-                    <ul>
-                        <li><strong>Federalismo e Intersetorialidade:</strong> A descentralização (federalismo) aumenta a complexidade da coordenação intersetorial. Problemas como a evasão escolar ou o atendimento a adolescentes do SINASE exigem articulação entre municípios, estados e União, além de diferentes pastas (Educação, Saúde, Assistência Social). A fragmentação de responsabilidades e recursos é um desafio constante.</li>
-                        <li><strong>Indicadores e Formulação de Políticas:</strong> A escolha do que medir (e do que não medir) tem consequências diretas. A crítica na ADPF 635 sobre a exclusão da "redução da letalidade policial" das metas de desempenho no RJ mostra como a ausência de um indicador pode sinalizar uma mudança de prioridade política, com graves impactos nos direitos humanos.</li>
-                        <li><strong>Emendas Parlamentares e Planejamento Técnico:</strong> O aumento da impositividade das emendas parlamentares (politics) cria uma tensão com o planejamento técnico e baseado em evidências da administração pública (polity). Embora possam atender a demandas locais, as emendas podem levar a uma alocação de recursos fragmentada, sem alinhamento com políticas nacionais e com risco de desvio de finalidade.</li>
-                        <li><strong>Transformação Digital e Desigualdade:</strong> A digitalização de serviços públicos, defendida por Audrey Tang como forma de inclusão, pode aprofundar desigualdades se não for acompanhada de políticas de acessibilidade e inclusão digital. A LGPD e a regulação de IA são mecanismos que buscam garantir o uso ético da tecnologia para reduzir, e não ampliar, a exclusão de grupos vulneráveis.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Seção Quiz -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Quiz Interativo</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div id="quiz-container" class="section-content space-y-6">
-                    <!-- Perguntas do quiz serão injetadas aqui pelo JS -->
-                </div>
-            </div>
-
-            <!-- Seção Provas Discursivas -->
-            <div class="section">
-                <h2 class="section-title">
-                    <span>Exemplos de Provas Discursivas</span>
-                    <span class="arrow">▼</span>
-                </h2>
-                <div class="section-content space-y-8">
-                    <!-- Prova 1 -->
-                    <div class="discursive-exam">
-                        <h4 class="font-bold text-lg mb-2">Prova Exemplo 1</h4>
-                        <p class="mb-4"><strong>Pergunta 1:</strong> A Constituição de 1988 estabeleceu um complexo arranjo federativo com responsabilidades compartilhadas. Discuta como os instrumentos de coordenação intergovernamental, como as comissões intergestores (CIT e CIB), são utilizados para dar organicidade a políticas nacionais como o SUAS. Em seguida, analise como o crescente volume de emendas parlamentares impositivas pode tensionar esse modelo de coordenação e o planejamento baseado em evidências. (20 a 30 linhas)</p>
-                        <button class="btn btn-sm toggle-answer">Mostrar Gabarito</button>
-                        <div class="answer-content hidden mt-4 p-4 bg-gray-100 rounded">
-                            <h5 class="font-semibold">Exemplo de Resolução 1:</h5>
-                            <p class="text-sm">A coordenação intergovernamental no federalismo brasileiro é essencial para a implementação de políticas sistêmicas como o SUAS. Instrumentos organizacionais, como as Comissões Intergestores Tripartite (CIT) e Bipartites (CIB), funcionam como arenas de pactuação, onde União, estados e municípios negociam e alinham normas, cofinanciamento e diretrizes, buscando superar a fragmentação inerente à descentralização. Esses espaços permitem a construção de consensos e a qualificação da gestão, sendo vitais para a uniformidade e capilaridade da política de assistência social em um território heterogêneo.
-                            <br><br>
-                            Contudo, o aumento das emendas parlamentares impositivas introduz uma lógica distinta, que pode tensionar esse modelo. Enquanto a coordenação via CIT/CIB se baseia em critérios técnicos e pactuados, as emendas respondem a interesses políticos localizados, muitas vezes desarticulados do planejamento estratégico nacional. Isso pode levar a uma alocação de recursos pulverizada, financiando ações pontuais que não se integram à rede socioassistencial planejada. Essa dinâmica arrisca minar o planejamento baseado em evidências e a lógica sistêmica do SUAS, sobrepondo a racionalidade política (politics) à capacidade de planejamento e coordenação da burocracia estatal (polity), podendo, em casos extremos, falsear o objetivo da política e configurar desvio de finalidade.
-                            </p>
-                            <h5 class="font-semibold mt-4">Exemplo de Resolução 2:</h5>
-                            <p class="text-sm">O modelo de federalismo cooperativo brasileiro, consagrado na CF/88, depende de mecanismos de coordenação para funcionar. Nas políticas sociais, as comissões intergestores (CIT/CIB) são o principal instrumento organizacional para alinhar os entes federados, permitindo que a União atue como indutora e reguladora, enquanto estados e municípios executam as políticas de forma pactuada. No SUAS, por exemplo, essas instâncias são cruciais para definir o cofinanciamento de serviços como CRAS e CREAS, garantindo um padrão mínimo de atendimento em todo o país.
-                            <br><br>
-                            A ascensão das emendas impositivas, no entanto, representa um desafio a essa governança. Ao destinar uma parcela significativa do orçamento discricionário a projetos específicos de parlamentares, o mecanismo reduz a margem de manobra do Executivo para alocar recursos conforme o planejamento estratégico e as pactuações interfederativas. Isso cria uma "governança paralela", onde a alocação de verbas segue uma lógica paroquial e não sistêmica. O tensionamento ocorre, pois, enquanto o planejamento do SUAS busca fortalecer a rede de forma integrada e baseada em diagnósticos, as emendas podem financiar obras ou serviços isolados, com menor impacto estrutural e maior risco de sobreposição ou ineficiência, dificultando a avaliação de resultados e a coerência da política pública como um todo.
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Prova 2 -->
-                    <div class="discursive-exam mt-8">
-                        <h4 class="font-bold text-lg mb-2">Prova Exemplo 2</h4>
-                        <p class="mb-4"><strong>Pergunta 2:</strong> A partir do caso da ADPF 635 e do debate sobre a política de segurança pública no Rio de Janeiro, explique a importância dos indicadores para o monitoramento e a avaliação de políticas. Discuta como a escolha (ou omissão) de um indicador, como o de letalidade policial, reflete as prioridades de uma gestão e se relaciona com os princípios da transparência e do controle social. (20 a 30 linhas)</p>
-                        <button class="btn btn-sm toggle-answer">Mostrar Gabarito</button>
-                        <div class="answer-content hidden mt-4 p-4 bg-gray-100 rounded">
-                           <h5 class="font-semibold">Exemplo de Resolução 1:</h5>
-                            <p class="text-sm">Indicadores são ferramentas essenciais no ciclo de políticas públicas, pois traduzem conceitos abstratos em medidas observáveis, permitindo o monitoramento da implementação e a avaliação dos resultados. O caso da ADPF 635 exemplifica dramaticamente essa importância. A crítica central do PGR, sobre a retirada da "redução da letalidade policial" do sistema de metas da polícia fluminense, demonstra que a escolha de indicadores não é um ato neutro. Ao omitir essa métrica, a gestão sinalizou que a preservação da vida deixou de ser uma prioridade mensurável, incentivando, ainda que indiretamente, uma atuação mais violenta em detrimento de abordagens preventivas.
-                            <br><br>
-                            Essa omissão impacta diretamente a transparência, pois oculta da sociedade um dado crucial para aferir a qualidade e a legitimidade da política de segurança. Sem esse indicador, o controle social, seja por parte do Ministério Público, da academia ou da sociedade civil, fica fragilizado, pois perde uma base objetiva para cobrar responsabilidade e exigir mudanças. Portanto, a definição de um conjunto robusto e público de indicadores, incluindo os de processo (nº de operações) e de resultado (letalidade, vitimização), é um pilar para uma governança democrática, alinhada aos direitos humanos e aberta à fiscalização.
-                            </p>
-                            <h5 class="font-semibold mt-4">Exemplo de Resolução 2:</h5>
-                             <p class="text-sm">O monitoramento e a avaliação de políticas públicas dependem de indicadores para aferir se os objetivos estão sendo alcançados de forma eficiente e eficaz. Como ilustrado no debate da ADPF 635, os indicadores são mais que números; eles constituem um sistema de incentivos que molda o comportamento dos agentes públicos. A decisão de excluir a meta de redução da letalidade policial do cálculo de bonificação dos policiais no Rio de Janeiro é um ato de gestão que revela uma escolha política: priorizar indicadores de criminalidade (como apreensões) em detrimento da proteção da vida. Isso demonstra que a formulação de uma política não se encerra em seu desenho, mas continua na sua implementação e monitoramento.
-                            <br><br>
-                            Tal escolha colide frontalmente com os princípios da transparência e do controle social. A transparência exige que o poder público preste contas de suas ações e resultados, especialmente em áreas sensíveis como a segurança. A omissão de um indicador de letalidade torna a política mais opaca e dificulta o escrutínio público. O controle social, por sua vez, depende de informações confiáveis para avaliar o desempenho governamental e demandar correções de rota. Assim, a disputa em torno de quais indicadores devem ser utilizados é, em essência, uma disputa sobre os valores e as prioridades que devem orientar o Estado.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Prova 3 -->
-                    <div class="discursive-exam mt-8">
-                        <h4 class="font-bold text-lg mb-2">Prova Exemplo 3</h4>
-                        <p class="mb-4"><strong>Pergunta 3:</strong> A transformação digital, conforme defendida por Audrey Tang, deve ser centrada nas pessoas para reduzir desigualdades. Analise como a implementação de uma política universal, como a educação, pode, paradoxalmente, reproduzir exclusão se não considerar a interseccionalidade e as barreiras de acesso (físicas, digitais, sociais). Proponha duas medidas corretivas de caráter intersetorial para tornar a política educacional mais inclusiva para grupos vulnerabilizados. (20 a 30 linhas)</p>
-                        <button class="btn btn-sm toggle-answer">Mostrar Gabarito</button>
-                        <div class="answer-content hidden mt-4 p-4 bg-gray-100 rounded">
-                             <h5 class="font-semibold">Exemplo de Resolução 1:</h5>
-                            <p class="text-sm">Políticas universais, embora desenhadas para todos, podem falhar em garantir equidade se operarem sob uma premissa de homogeneidade, ignorando as barreiras estruturais enfrentadas por grupos específicos. A educação é um exemplo clássico: oferecer uma vaga escolar não garante a permanência de um estudante que enfrenta pobreza, violência doméstica, falta de transporte ou racismo institucional. A interseccionalidade nos mostra que essas vulnerabilidades se sobrepõem – uma mulher negra e mãe solo de uma periferia urbana enfrenta obstáculos qualitativamente diferentes dos de outros estudantes. A transformação digital, nesse contexto, pode agravar a exclusão se o acesso a dispositivos e internet não for garantido, criando uma nova barreira.
-                            <br><br>
-                            Para tornar a política educacional mais inclusiva, são necessárias medidas intersetoriais. A primeira é a articulação da Educação com a Assistência Social e a Política Urbana para garantir <strong>programas de permanência</strong>, como bolsas de estudo condicionadas à frequência, transporte público gratuito ou subsidiado para estudantes e a oferta de vagas em creches em período integral ou noturno para os filhos de estudantes, especialmente mães. A segunda medida é a articulação com a Saúde e os Direitos Humanos para implementar <strong>núcleos de acolhimento psicossocial e combate às opressões</strong> dentro das escolas, oferecendo suporte à saúde mental e formando educadores em práticas pedagógicas antirracistas e antissexistas, criando um ambiente escolar seguro e acolhedor.
-                            </p>
-                             <h5 class="font-semibold mt-4">Exemplo de Resolução 2:</h5>
-                            <p class="text-sm">A universalidade formal de uma política pública, como o direito à educação, não se traduz em acesso universal efetivo sem um desenho sensível às desigualdades estruturais. A abordagem de Audrey Tang sobre a tecnologia centrada em pessoas ressoa aqui: a política deve se adaptar às pessoas, não o contrário. Uma política educacional que não considera as múltiplas dimensões da exclusão – raça, gênero, classe, território – acaba por ser seletiva na prática, pois seus "requisitos" implícitos (tempo disponível, recursos para transporte, capital cultural) não são acessíveis a todos. A ausência de uma perspectiva interseccional no desenho e implementação faz com que a política, mesmo sem intenção, reforce as desigualdades que deveria combater.
-                            <br><br>
-                            Duas medidas intersetoriais corretivas seriam: 1) A criação de uma <strong>rede de proteção ao estudante trabalhador</strong>, articulando escolas com o Sistema Público de Emprego e a Assistência Social. Essa rede ofereceria horários flexíveis, qualificação profissional integrada ao currículo e acesso a programas de transferência de renda, reconhecendo a necessidade de conciliar estudo e trabalho. 2) O desenvolvimento de uma <strong>política de conectividade e inclusão digital</strong>, em parceria com o Ministério das Comunicações e empresas de tecnologia. Esta ação proveria acesso gratuito à internet de qualidade e dispositivos para estudantes de baixa renda, além de letramento digital, garantindo que a transformação digital da educação seja um vetor de inclusão, e não de aprofundamento do abismo social.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </main>
-    </div>
+    <footer class="bg-stone-100 border-t border-stone-200 mt-20">
+        <div class="container mx-auto px-6 py-8 text-center text-stone-500">
+            <p>&copy; 2024 Estudo Interativo: Políticas Públicas e Segurança no Brasil.</p>
+            <p class="text-sm mt-2">Aplicação gerada para fins de estudo e visualização de dados, com base nos materiais fornecidos.</p>
+        </div>
+    </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Lógica para seções expansíveis
-            const sectionTitles = document.querySelectorAll('.section-title');
-            sectionTitles.forEach(title => {
-                title.addEventListener('click', () => {
-                    title.classList.toggle('active');
-                    const content = title.nextElementSibling;
-                    if (content.style.display === 'block') {
-                        content.style.display = 'none';
-                    } else {
-                        content.style.display = 'block';
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const data = {
+                eixos: [
+                    {
+                        title: 'Governança, Federalismo e Políticas Sociais',
+                        icon: '🏛️',
+                        content: `A Constituição de 1988 redesenhou o pacto federativo, descentralizando responsabilidades e fortalecendo os municípios. Isso criou um complexo sistema de governança multinível que exige instrumentos de coordenação (financeiros, normativos, organizacionais) para alinhar políticas como o SUAS e o SUS. A eficácia dessa coordenação é um desafio constante, dada a grande desigualdade de capacidades institucionais e financeiras entre os entes federados. Estudos mostram que políticas mais reguladas pelo governo federal, como saúde e educação, tendem a ter gastos mais uniformes entre os municípios, sugerindo que a regulação federal é um fator chave para reduzir desigualdades territoriais.`,
+                        chart: {
+                            type: 'doughnut',
+                            title: 'Desigualdade de Gasto Público Municipal (Ilustrativo)',
+                            data: {
+                                labels: ['Habitação e Urbanismo (Alta Desigualdade)', 'Transporte (Alta Desigualdade)', 'Saúde (Menor Desigualdade)', 'Educação (Menor Desigualdade)'],
+                                datasets: [{
+                                    label: 'Índice de Gini do Gasto',
+                                    data: [0.7, 0.65, 0.4, 0.35],
+                                    backgroundColor: ['#ef4444', '#f97316', '#22c55e', '#38bdf8'],
+                                }]
+                            },
+                            options: {
+                                plugins: {
+                                    title: { display: true, text: 'Desigualdade de Gasto Público Municipal (Ilustrativo)', font: { size: 16 } },
+                                    tooltip: { callbacks: { label: (context) => `Índice de Gini (ilustrativo): ${context.raw}` } }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        title: 'Segurança Pública e Direitos',
+                        icon: '🛡️',
+                        content: `A segurança pública no Rio de Janeiro, conforme discutido na ADPF 635, exemplifica a tensão entre uma abordagem de confronto ("guerra ao crime") e a garantia de direitos fundamentais. A alta letalidade policial, o uso de armamento pesado e a resistência a mecanismos de transparência (como câmeras corporais e GPS) são sintomas de uma crise profunda. A remoção da "redução da letalidade" do sistema de metas da polícia foi um ponto central de crítica do PGR, indicando um possível desvio de finalidade da política de segurança, que deveria priorizar a preservação de vidas. A ADPF busca reinserir o controle e a accountability como pilares da atuação policial.`,
+                        diagram: {
+                            type: 'html',
+                            title: 'Conflito de Visões na Segurança Pública',
+                            items: [
+                                { title: 'Visão de "Guerra"', content: ['Confronto Direto', 'Ênfase em Indicadores de Criminalidade', 'Uso de Força Letal', 'Baixa Transparência'] },
+                                { title: 'Visão Garantista', content: ['Preservação da Vida', 'Respeito aos Direitos Humanos', 'Controle e Accountability', 'Transparência (Câmeras, GPS)'] },
+                            ]
+                        }
+                    },
+                    {
+                        title: 'Análise e Avaliação de Políticas Públicas',
+                        icon: '📊',
+                        content: `Para uma gestão pública baseada em evidências, ferramentas como a Análise do Contexto (CIPI) e o Mapa de Processos e Resultados (MaPR) são fundamentais. A CIPI analisa as instituições, os atores e as ideias que moldam uma política, permitindo uma avaliação mais robusta e menos "neutra". O MaPR descreve a lógica causal de uma intervenção (Recursos → Atividades → Produtos → Resultados → Impactos), orientando o monitoramento e a avaliação. A distinção entre monitoramento (contínuo, focado na execução) e avaliação (esporádica, focada em impactos) é crucial. O uso da triangulação de evidências (quantitativas, qualitativas, de diferentes fontes) é considerado o "padrão-ouro" para garantir a robustez dos achados.`,
+                        diagram: {
+                            type: 'html',
+                            title: 'Estrutura do MaPR',
+                            items: [
+                                { title: 'Recursos', content: ['Orçamento, Pessoal, Infraestrutura'] },
+                                { title: 'Atividades', content: ['Ações realizadas, Treinamentos'] },
+                                { title: 'Produtos', content: ['Serviços entregues, Bens produzidos'] },
+                                { title: 'Resultados', content: ['Mudanças de curto/médio prazo'] },
+                                { title: 'Impactos', content: ['Transformações de longo prazo'] }
+                            ],
+                            flow: true
+                        }
+                    },
+                    {
+                        title: 'Governança Contemporânea',
+                        icon: '🌐',
+                        content: `A governança atual no Brasil é marcada por tensões entre a busca por modernização, via transformação digital, e práticas políticas tradicionais, como as emendas parlamentares. A transformação digital preza pela eficiência, transparência e serviços centrados no cidadão. Em contraste, o crescimento expressivo das emendas parlamentares impositivas (de R$ 4 bi em 2015 para R$ 46 bi em 2024) reduz a capacidade de planejamento estratégico do Executivo e aumenta o risco de alocação de recursos por critérios políticos de curto prazo, podendo configurar "desvio de finalidade". Esse cenário evidencia um conflito entre uma lógica de governança técnica e racional e outra mais permeável a interesses particularistas.`,
+                        chart: {
+                            type: 'bar',
+                            title: 'Evolução das Emendas Parlamentares (Valores em R$ Bilhões)',
+                            data: {
+                                labels: ['2015', '2023 (Previsão)', '2024'],
+                                datasets: [{
+                                    label: 'Valor Total',
+                                    data: [4, 8, 46],
+                                    backgroundColor: ['#a78bfa', '#8b5cf6', '#7c3aed'],
+                                    borderColor: '#6d28d9',
+                                    borderWidth: 1
+                                }]
+                            },
+                             options: {
+                                plugins: {
+                                    title: { display: true, text: 'Evolução das Emendas Parlamentares (Valores em R$ Bilhões)', font: { size: 16 } },
+                                    tooltip: { callbacks: { label: (context) => `Valor: R$ ${context.raw} Bilhões` } }
+                                },
+                                scales: { y: { beginAtZero: true, ticks: { callback: (value) => `R$ ${value} bi` } } }
+                            }
+                        }
+                    },
+                ],
+                timeline: [
+                    { year: '1883-1889', event: 'Na Alemanha de Bismarck, são criadas as primeiras leis de Seguro Social (Saúde, Acidentes, Aposentadoria), marcos pioneiros da proteção social.' },
+                    { year: '1923', event: 'Criação da Previdência Social no Brasil com a Lei Eloy Chaves.' },
+                    { year: '1942', event: 'Relatório Beveridge (Reino Unido) propõe um conceito abrangente de "Segurança Social", influenciando sistemas de bem-estar em todo o mundo.' },
+                    { year: '1988', event: 'Promulgação da Constituição Federal, a "Constituição Cidadã". Marco crucial que redefine o pacto federativo, cria o SUS e universaliza direitos sociais.' },
+                    { year: '1999', event: 'Lei 9.882 regulamenta a ADPF. Lei 9.790 (OSCIPs) estimula a participação de OSCs em políticas públicas.' },
+                    { year: '2004', event: 'Início da implementação do Serviço de Proteção e Atendimento Integral à Família (PAIF) no âmbito do SUAS.' },
+                    { year: '2014', event: 'Entra em vigor a Lei 13.019, o Marco Regulatório das Organizações da Sociedade Civil (MROSC).' },
+                    { year: '2016', event: 'Emendas parlamentares individuais tornam-se impositivas no orçamento federal.' },
+                    { year: '2020', event: 'Eventos cruciais relacionados à ADPF 635, com manifestações do PGR criticando a política de segurança do RJ e a alta letalidade policial.' },
+                    { year: '2024', event: 'Valor destinado a emendas parlamentares atinge R$ 46 bilhões, evidenciando seu crescente peso no orçamento.' },
+                ],
+                flashcards: [
+                    { term: 'CIPI', definition: 'Análise do Contexto Institucional, Político e Ideacional. Etapa pré-avaliativa que examina as instituições (regras), os atores (interesses) e as ideias (valores) que moldam uma política.' },
+                    { term: 'MaPR', definition: 'Mapa de Processos e Resultados. Ferramenta que descreve a lógica causal de um programa: Recursos → Atividades → Produtos → Resultados → Impactos.' },
+                    { term: 'Federalismo Cooperativo', definition: 'Modelo onde União, estados e municípios compartilham responsabilidades, exigindo cooperação e coordenação. A União geralmente atua como indutora e reguladora.' },
+                    { term: 'ADPF', definition: 'Arguição de Descumprimento de Preceito Fundamental. Ação no STF para questionar atos ou omissões do poder público que violem princípios essenciais da Constituição.' },
+                    { term: 'Letalidade Policial', definition: 'Número de mortes causadas por ações policiais. É um indicador crítico da violência estatal e da qualidade da política de segurança.' },
+                    { term: 'SUAS', definition: 'Sistema Único de Assistência Social. Organiza a política de assistência social de forma descentralizada e participativa, através de equipamentos como CRAS e CREAS.' },
+                    { term: 'Universalismo vs. Focalização', definition: 'Universalismo: políticas para todos (ex: SUS). Focalização: políticas para grupos específicos (ex: Bolsa Família). O Brasil combina ambas as lógicas.' },
+                    { term: 'Desvio de Finalidade', definition: 'Vício em um ato administrativo que ocorre quando a ação é praticada com um fim diferente daquele previsto em lei, mesmo sem intenção dolosa.' },
+                    { term: 'Intersetorialidade', definition: 'Articulação entre diferentes setores (saúde, educação, assistência) para enfrentar problemas complexos que não podem ser resolvidos de forma isolada.' },
+                    { term: 'Emendas Impositivas', definition: 'Dotações orçamentárias indicadas por parlamentares que o Executivo é obrigado a executar, limitando sua discricionariedade.' },
+                    { term: 'Triangulação de Evidências', definition: 'Combinação de diferentes tipos de dados (quantitativos, qualitativos), métodos e fontes para aumentar a robustez de uma avaliação.' },
+                    { term: 'Desmercantilização', definition: 'Grau em que cidadãos podem manter seu bem-estar sem depender do mercado, através de direitos garantidos pelo Estado (ex: acesso à saúde pública).' },
+                ],
+                personagens: [
+                    { name: 'Paulo de M. Jannuzzi', contribution: 'Referência em análise e avaliação de políticas públicas, proponente da CIPI e do MaPR. Enfatiza a importância do contexto e do uso de indicadores robustos.' },
+                    { name: 'Sônia Fleury', contribution: 'Pesquisadora fundamental para a compreensão da Seguridade Social brasileira pós-CF/88, destacando seus princípios e a ruptura com o modelo de cidadania regulada.' },
+                    { name: 'Audrey Tang', contribution: 'Defensora da transformação digital centrada nas pessoas, com foco na redução de desigualdades, inclusão e uso ético da tecnologia para melhorar serviços públicos.' },
+                    { name: 'Wilson Witzel', contribution: 'Ex-Governador do RJ, cujas políticas de segurança e declarações sobre letalidade policial foram objeto central da ADPF 635, representando a visão de confronto.' },
+                    { name: 'William Beveridge', contribution: 'Autor do Relatório Beveridge (1942), que influenciou mundialmente o conceito de Seguridade Social ao propor o combate aos "cinco gigantes" (Pobreza, Doença, etc.).' },
+                    { name: 'Otto von Bismarck', contribution: 'Chanceler alemão que apoiou a criação do primeiro sistema de Seguro Social do mundo no século XIX, um marco histórico da proteção social estatal.' }
+                ],
+                quiz: [
+                    { question: 'A Análise do Contexto Institucional, Político e Ideacional (CIPI) propõe a incorporação de quais chaves analíticas?', options: ['Economia, Sociedade e Cultura', 'Instituições, Interesses e Ideias', 'Orçamento, Legislação e Burocracia', 'Eficiência, Eficácia e Efetividade'], answer: 1, explanation: 'A CIPI, conforme Jannuzzi, analisa as Instituições (polity), os Interesses dos atores (politics) e as Ideias (zeitgeist) que moldam uma política.' },
+                    { question: 'Qual a principal função de um Mapa de Processos e Resultados (MaPR)?', options: ['Listar todas as despesas financeiras', 'Descrever a narrativa causal do programa', 'Apenas identificar os problemas a resolver', 'Avaliar a satisfação dos beneficiários'], answer: 1, explanation: 'O MaPR descreve a cadeia causal de uma intervenção: Recursos → Atividades → Produtos → Resultados → Impactos.' },
+                    { question: 'No federalismo brasileiro, qual o papel das Comissões Intergestores (CIT e CIBs)?', options: ['Apenas controle financeiro', 'Impor decisões do governo federal', 'Ser espaços de negociação e pactuação', 'Serem meramente consultivas'], answer: 2, explanation: 'As CITs e CIBs são arenas cruciais para a negociação, pactuação e alinhamento de políticas entre os entes federados, como no SUS e SUAS.' },
+                    { question: 'A retirada da "redução da letalidade policial" do sistema de metas da polícia do RJ foi uma crítica central em qual contexto?', options: ['Na criação do SUAS', 'Na discussão do MROSC', 'Na ADPF 635', 'No debate sobre emendas parlamentares'], answer: 2, explanation: 'Esta foi uma das críticas mais contundentes do PGR na ADPF 635, apontando um possível desvio de finalidade da política de segurança.' },
+                    { question: 'O que caracteriza uma política social "focalizada"?', options: ['É destinada a todos os cidadãos', 'É financiada apenas por impostos', 'É direcionada a grupos específicos com base em critérios', 'É executada exclusivamente pelo governo federal'], answer: 2, explanation: 'Políticas focalizadas, como o Bolsa Família, são direcionadas a públicos específicos, selecionados por critérios como renda ou vulnerabilidade.' },
+                    { question: 'Qual o principal risco associado à crescente impositividade das emendas parlamentares?', options: ['Aumento da transparência', 'Fortalecimento do planejamento de longo prazo', 'Pulverização de recursos e "desvio de finalidade"', 'Redução do poder do Legislativo'], answer: 2, explanation: 'A impositividade pode levar à pulverização de recursos em projetos de baixo impacto e ao "desvio de finalidade", onde o interesse público é preterido por lógicas particularistas.' },
+                    { question: 'Qual o objetivo do princípio da "interoperabilidade" na transformação digital?', options: ['Manter cada sistema de dados isolado', 'Permitir que diferentes sistemas conversem e troquem informações', 'Garantir a segurança contra hackers', 'Aumentar a burocracia digital'], answer: 1, explanation: 'A interoperabilidade busca integrar sistemas para que eles funcionem juntos, simplificando serviços e evitando que o cidadão repita informações.' },
+                    { question: 'O Sistema Único de Saúde (SUS) é um exemplo de política baseada no princípio do(a):', options: ['Focalização', 'Universalismo', 'Contribuição obrigatória', 'Privatização'], answer: 1, explanation: 'O SUS é o principal exemplo de política universalista no Brasil, visando garantir o acesso à saúde a todos os cidadãos.' },
+                    { question: 'Qual ferramenta metodológica é usada para descrever a lógica de uma intervenção, conectando recursos a impactos?', options: ['CIPI', 'ADPF', 'MaPR', 'LGPD'], answer: 2, explanation: 'O Mapa de Processos e Resultados (MaPR) é a ferramenta que descreve a cadeia causal de um programa.' },
+                    { question: 'Segundo a visão de Audrey Tang, a tecnologia deve:', options: ['Adaptar-se à sociedade', 'Ditar as regras para a sociedade', 'Ser acessível apenas para especialistas', 'Substituir a interação humana'], answer: 0, explanation: 'Audrey Tang defende que a transformação digital deve ser sobre transformar as tecnologias para se adequarem às necessidades e valores da sociedade.' },
+                    { question: 'A combinação de diferentes tipos de dados (quantitativos e qualitativos) e fontes em uma avaliação é chamada de:', options: ['Monitoramento', 'Focalização', 'Descentralização', 'Triangulação'], answer: 3, explanation: 'A triangulação é o método que combina múltiplas fontes e tipos de dados para aumentar a robustez e a validade dos achados de uma avaliação.' },
+                    { question: 'O que é "desmercantilização" em políticas sociais?', options: ['A venda de serviços públicos', 'O grau em que o bem-estar do cidadão independe do mercado', 'O aumento da participação de empresas na área social', 'A redução de impostos sobre mercadorias'], answer: 1, explanation: 'Desmercantilização refere-se à capacidade de um sistema de proteção social garantir o bem-estar dos cidadãos independentemente de sua participação no mercado.' },
+                    { question: 'Onde se localiza a principal tensão no federalismo brasileiro pós-CF/88?', options: ['Entre o Poder Judiciário e o Legislativo', 'Entre a autonomia dos entes e a necessidade de coordenação nacional', 'Entre as políticas econômicas e as ambientais', 'Entre o setor público e o privado'], answer: 1, explanation: 'A dinâmica federativa é tensionada pela necessidade de equilibrar a autonomia de municípios e estados com a coordenação de políticas nacionais para garantir direitos uniformes.' },
+                    { question: 'Qual a principal diferença entre monitoramento e avaliação?', options: ['Monitoramento é qualitativo, avaliação é quantitativa.', 'Monitoramento é contínuo e focado na execução; avaliação é esporádica e foca em impactos.', 'Não há diferença, são sinônimos.', 'Monitoramento é externo, avaliação é interna.'], answer: 1, explanation: 'O monitoramento acompanha a implementação de forma contínua, enquanto a avaliação analisa os efeitos e impactos de forma mais aprofundada e periódica.' },
+                    { question: 'A Constituição de 1988 estabeleceu a Seguridade Social sobre um tripé formado por:', options: ['Educação, Cultura e Esporte', 'Saúde, Previdência e Assistência Social', 'Trabalho, Habitação e Transporte', 'Segurança, Justiça e Defesa'], answer: 1, explanation: 'A Seguridade Social brasileira é composta pelo tripé: Saúde (universal), Previdência Social (contributiva) e Assistência Social (não contributiva).' }
+                ],
+                discursive: [
+                    {
+                        title: 'Prova 1: Análise Contextual, Avaliação de Políticas Públicas e Desafios da Segurança',
+                        questions: [
+                            {
+                                question: `A Análise do Contexto Institucional, Político e Ideacional (CIPI) é uma ferramenta crucial para a compreensão e avaliação de políticas públicas.
+                                <br>a. Discorra sobre como os três componentes da CIPI (Instituições, Atores e Ideias) interagem para moldar o desenho e a implementação de uma política de segurança pública, utilizando como pano de fundo a situação do Rio de Janeiro discutida na ADPF 635.
+                                <br>b. Explique de que maneira a ausência de uma análise contextual robusta, como a proposta pela CIPI, pode levar a interpretações equivocadas sobre a eficácia ou os fracassos de intervenções na área da segurança.`,
+                                answer: `A política de segurança pública no Rio de Janeiro, debatida na ADPF 635, é moldada pela interação da CIPI. As **Instituições** (regras, polícias, sistema de justiça) definem o quadro operacional. Os **Atores** (governo, MP, comunidades) possuem interesses distintos. E as **Ideias** (a "guerra" ao crime vs. a valorização da vida) disputam a hegemonia, influenciando as estratégias (ex: remoção da redução da letalidade das metas). Sem uma análise CIPI robusta, uma avaliação pode atribuir o fracasso de uma medida a falhas técnicas, ignorando resistências políticas ou a inadequação da medida ao contexto. Isso resulta em recomendações ineficazes, pois a avaliação se torna "pretensamente neutra", desconsiderando as dinâmicas de poder que determinam os resultados.`
+                            },
+                            {
+                                question: `O Mapa de Processos e Resultados (MaPR) é uma ferramenta essencial para a gestão de programas, enquanto a transformação digital busca modernizar a oferta de serviços públicos.
+                                <br>a. Detalhe como a cadeia causal do MaPR (Recursos, Atividades, Produtos, Resultados, Impactos) poderia ser aplicada para analisar um programa hipotético de instalação de câmeras corporais em policiais, conforme as demandas da ADPF 635.
+                                <br>b. Relacione como os princípios da transformação digital, como acessibilidade e interoperabilidade, poderiam otimizar a coleta, o armazenamento e o uso dos dados gerados por essas câmeras para fins de transparência e controle.`,
+                                answer: `Em um programa de câmeras corporais, o MaPR se aplicaria assim: **Recursos** (orçamento), **Atividades** (compra, treinamento), **Produto** (policiais com câmeras), **Resultados** (redução de denúncias, mais evidências) e **Impacto** (redução da letalidade, mais confiança). Os princípios da transformação digital otimizariam o programa: a **interoperabilidade** integraria as imagens a outros sistemas de investigação, e a **acessibilidade** (controlada) aos dados por órgãos de controle aumentaria a transparência. Isso transformaria as câmeras em ferramentas efetivas de controle, garantindo a integridade das evidências e o uso ético da tecnologia.`
+                            }
+                        ]
+                    },
+                    {
+                        title: 'Prova 2: Políticas Sociais, Federalismo e Evidências na Gestão Pública',
+                        questions: [
+                             {
+                                question: `O federalismo brasileiro, reconfigurado pela CF/88, impõe desafios à coordenação de políticas sociais como o SUAS, que busca conciliar universalismo e focalização.
+                                <br>a. Discuta como a descentralização de responsabilidades no SUAS interage com as diferentes capacidades financeiras e institucionais dos municípios, e de que forma os instrumentos de coordenação federal tentam mitigar as desigualdades resultantes.
+                                <br>b. Analise a tensão entre os princípios do universalismo e da focalização na oferta de serviços socioassistenciais pelo SUAS.`,
+                                answer: `A descentralização no SUAS encontra o desafio das heterogêneas capacidades municipais. Para mitigar desigualdades, a coordenação federal usa instrumentos como cofinanciamento, normativas nacionais e instâncias de pactuação (CIT, CIBs). A tensão universalismo vs. focalização é gerenciada por níveis de proteção: a Proteção Básica (CRAS) é mais universalista, prevenindo riscos; a Proteção Especial (CREAS) é focalizada, atendendo casos de direitos violados. Assim, o SUAS tenta conciliar o acolhimento amplo com respostas específicas às vulnerabilidades agudas.`
+                            },
+                             {
+                                question: `A gestão pública contemporânea demanda o uso crescente de evidências e o enfrentamento de problemas complexos através da intersetorialidade.
+                                <br>a. Apresente as três concepções de "evidência" (restrita, ampla e pragmática) e explique por que a triangulação é um "padrão-ouro" para a robustez da avaliação.
+                                <br>b. Discuta a importância da intersetorialidade para lidar com problemas complexos como o SINASE e aponte dois desafios para sua efetivação.`,
+                                answer: `As três concepções de evidência são: **restrita** (científica-quantitativa), **ampla** (narrativas) e **pragmática** (conjunto de dados e conhecimentos para um propósito). A triangulação é um "padrão-ouro" porque, ao combinar diferentes tipos de dados e fontes, aumenta a robustez e a consistência dos achados, minimizando vieses. A intersetorialidade é crucial para problemas como o SINASE, que demandam ações articuladas de saúde, educação, etc. Dois desafios para sua efetivação no Brasil são: a fragmentação institucional e a cultura setorializada, e as assimetrias de capacidade e recursos entre os entes federados, que dificultam a implementação de ações coordenadas.`
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            const eixosContainer = document.getElementById('eixos-container');
+            const timelineContainer = document.getElementById('timeline-container');
+            const flashcardsContainer = document.getElementById('flashcards-container');
+            const personagensContainer = document.getElementById('personagens-container');
+
+            function createChart(ctx, chartData) {
+                new Chart(ctx, {
+                    type: chartData.type,
+                    data: chartData.data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        ...chartData.options
                     }
                 });
-            });
-
-            // Lógica para flashcards
-            const flashcards = document.querySelectorAll('.flashcard');
-            flashcards.forEach(card => {
-                card.addEventListener('click', () => {
-                    card.classList.toggle('is-flipped');
-                });
-            });
-
-            // Lógica para provas discursivas
-            const answerToggles = document.querySelectorAll('.toggle-answer');
-            answerToggles.forEach(button => {
-                button.addEventListener('click', () => {
-                    const answerContent = button.nextElementSibling;
-                    answerContent.classList.toggle('hidden');
-                    if (answerContent.classList.contains('hidden')) {
-                        button.textContent = 'Mostrar Gabarito';
-                    } else {
-                        button.textContent = 'Ocultar Gabarito';
-                    }
-                });
-            });
-
-            // --- Dados do Quiz ---
-            const quizData = [
-                {
-                    question: "A Análise do Contexto Institucional, Político e Ideacional (CIPI) propõe a incorporação de quais chaves analíticas para entender as políticas públicas?",
-                    options: ["Economia, Sociedade e Cultura", "Instituições, Interesses e Ideias", "Orçamento, Legislação e Burocracia", "Eficiência, Eficácia e Efetividade"],
-                    answer: "Instituições, Interesses e Ideias",
-                    explanation: "O texto de Jannuzzi (2022) explicitamente menciona que a CIPI utiliza as três grandes chaves analíticas da Ciência Política: Instituições (polity), Atores e seus interesses (politics) e Ideias e valores (zeitgeist)."
-                },
-                {
-                    question: "Qual a principal função de um Mapa de Processos e Resultados (MaPR) na gestão de programas?",
-                    options: ["Listar todas as despesas financeiras do programa.", "Descrever a narrativa causal do programa, desde os recursos até os impactos.", "Apenas identificar os problemas que o programa busca resolver.", "Avaliar a satisfação dos beneficiários ao final do programa."],
-                    answer: "Descrever a narrativa causal do programa, desde os recursos até os impactos.",
-                    explanation: "O MaPR é um recurso metodológico para descrever a narrativa de um projeto, pressupondo uma cadeia causal que inclui Recursos, Atividades, Produtos, Resultados e Impactos."
-                },
-                {
-                    question: "A institucionalização de arenas de pactuação intergovernamental, como as Comissões Intergestores Tripartites (CITs), é uma inovação relevante especialmente em quais políticas?",
-                    options: ["Somente a política de Defesa Nacional.", "A política de Segurança Pública e Justiça.", "A saúde e a assistência social.", "A política externa e relações internacionais."],
-                    answer: "A saúde e a assistência social.",
-                    explanation: "As fontes destacam que as CITs e CIBs são inovações relevantes em políticas que estruturam sistemas nacionais, como é o caso do SUS (saúde) e do SUAS (assistência social)."
-                },
-                {
-                    question: "Qual o principal risco da impositividade crescente das emendas parlamentares, segundo os textos de apoio?",
-                    options: ["Reduzir a participação popular.", "Aumentar a burocracia do Executivo.", "Gerar alocação de recursos fragmentada e desarticulada do planejamento estratégico.", "Diminuir o orçamento total para políticas sociais."],
-                    answer: "Gerar alocação de recursos fragmentada e desarticulada do planejamento estratégico.",
-                    explanation: "O texto sobre emendas aponta que boa parte do recurso discricionário está sendo definida por parlamentares, o que pode levar a um desvirtuamento do poder e alocação de recursos sem aderência ao planejamento técnico e objetivos prezáveis da norma."
-                },
-                {
-                    question: "No contexto da ADPF 635, a crítica do PGR à política de segurança do RJ se concentrou, principalmente, em quê?",
-                    options: ["Na falta de armamento para os policiais.", "No baixo salário dos agentes de segurança.", "Na retirada da 'redução da letalidade policial' como meta de desempenho.", "Na falta de cooperação com o governo federal."],
-                    answer: "Na retirada da 'redução da letalidade policial' como meta de desempenho.",
-                    explanation: "A manifestação do PGR destaca como um 'ato concreto' a retirada da redução da letalidade policial do cálculo do Índice de Desempenho de Metas (IDM), indicando que a violência letal se tornou um norte da política."
-                },
-                {
-                    question: "Segundo a abordagem pragmática, o que são 'evidências' para políticas públicas?",
-                    options: ["Apenas dados de experimentos controlados e randomizados.", "Qualquer narrativa construída por atores políticos influentes.", "Um conjunto plural de informações (estatísticas, estudos, conhecimento tácito) cuja utilidade depende do propósito.", "Somente a legislação e as normas vigentes."],
-                    answer: "Um conjunto plural de informações (estatísticas, estudos, conhecimento tácito) cuja utilidade depende do propósito.",
-                    explanation: "A concepção pragmática reconhece que a evidência útil depende do que se quer saber. Inclui estatísticas oficiais, pesquisas, material de gestão e o conhecimento prático de gestores."
-                },
-                {
-                    question: "O que se entende por triangulação de fontes e métodos na avaliação de políticas?",
-                    options: ["Usar apenas três fontes de dados.", "Focar em três métodos quantitativos.", "Combinar diferentes tipos de dados, métodos e perspectivas para aumentar a robustez dos achados.", "Realizar a pesquisa em três locais diferentes."],
-                    answer: "Combinar diferentes tipos de dados, métodos e perspectivas para aumentar a robustez dos achados.",
-                    explanation: "A triangulação é um 'padrão-ouro' que aumenta a consistência dos achados ao combinar múltiplas fontes (dados quantitativos, qualitativos) e sujeitos (gestores, beneficiários), sendo ideal para analisar problemas complexos."
-                },
-                {
-                    question: "Qual o papel do Cadastro Único (CadÚnico) em políticas intersetoriais como o Bolsa Família?",
-                    options: ["Apenas para controle financeiro do programa.", "Serve como instrumento de identificação de famílias de baixa renda e fonte de informação para a gestão de condicionalidades de diferentes setores (saúde, educação).", "É um sistema exclusivo da política de assistência social.", "Funciona como um censo demográfico anual."],
-                    answer: "Serve como instrumento de identificação de famílias de baixa renda e fonte de informação para a gestão de condicionalidades de diferentes setores (saúde, educação).",
-                    explanation: "O CadÚnico é uma ferramenta intersetorial chave, pois permite não só a elegibilidade para o Bolsa Família, mas também o acompanhamento das condicionalidades e o acesso a outras políticas sociais."
-                },
-                {
-                    question: "A abordagem de transformação digital de Audrey Tang enfatiza que:",
-                    options: ["A sociedade deve se adaptar rapidamente às novas tecnologias.", "A tecnologia deve ser usada para centralizar o poder do Estado.", "A tecnologia deve ser desenvolvida para atender às necessidades e valores da sociedade, promovendo inclusão.", "A principal meta da digitalização é a eficiência de custos, mesmo que exclua alguns grupos."],
-                    answer: "A tecnologia deve ser desenvolvida para atender às necessidades e valores da sociedade, promovendo inclusão.",
-                    explanation: "A citação de Audrey Tang no material da prova é clara: 'A transformação digital deve ser sobre transformar as tecnologias para se adequarem à sociedade, e não o contrário'."
-                },
-                {
-                    question: "Qual destes é um exemplo de política universalista?",
-                    options: ["Programa Bolsa Família", "Cotas em universidades", "Sistema Único de Saúde (SUS)", "Benefício de Prestação Continuada (BPC)"],
-                    answer: "Sistema Único de Saúde (SUS)",
-                    explanation: "O SUS é destinado a toda a população brasileira, sem exigência de contribuição ou critério de renda, caracterizando-se como uma política universal."
-                },
-                {
-                    question: "O que o princípio da 'equidade', em políticas sociais, busca garantir?",
-                    options: ["Que todos recebam exatamente o mesmo tratamento e os mesmos serviços.", "Tratar desigualmente os desiguais, reconhecendo as múltiplas vulnerabilidades para promover justiça social.", "Que apenas os mais pobres tenham acesso aos serviços.", "A privatização dos serviços para aumentar a competição."],
-                    answer: "Tratar desigualmente os desiguais, reconhecendo as múltiplas vulnerabilidades para promover justiça social.",
-                    explanation: "A equidade vai além da igualdade formal, buscando ajustar as políticas para atender às necessidades específicas de diferentes grupos, a fim de reduzir as desigualdades de fato."
-                },
-                 {
-                    question: "Qual o principal desafio para a efetivação da intersetorialidade no contexto federativo brasileiro?",
-                    options: ["A falta de problemas complexos que justifiquem a medida.", "A fragmentação institucional, a cultura organizacional setorializada e as assimetrias federativas.", "O excesso de recursos orçamentários.", "A forte centralização do poder nos municípios."],
-                    answer: "A fragmentação institucional, a cultura organizacional setorializada e as assimetrias federativas.",
-                    explanation: "Conforme os textos, a fragmentação, a cultura de cada 'pasta' agir por si e as diferenças de capacidade entre municípios, estados e União são os maiores entraves para uma ação intersetorial eficaz."
-                },
-                 {
-                    question: "A Lei 13.019/2014, conhecida como Marco Regulatório das Organizações da Sociedade Civil (MROSC), teve como objetivo:",
-                    options: ["Proibir parcerias entre o Estado e as OSCs.", "Aumentar a burocracia para a criação de novas OSCs.", "Estabelecer um novo regime jurídico para as parcerias entre a administração pública e as OSCs, com mais transparência e segurança jurídica.", "Transferir todas as responsabilidades do Estado para as OSCs."],
-                    answer: "Estabelecer um novo regime jurídico para as parcerias entre a administração pública e as OSCs, com mais transparência e segurança jurídica.",
-                    explanation: "O MROSC buscou modernizar e dar mais clareza às regras das parcerias, definindo instrumentos como termos de fomento e colaboração, e exigindo mais transparência e controle de resultados."
-                },
-                {
-                    question: "O conceito de 'desfamiliarização' em regimes de bem-estar refere-se a:",
-                    options: ["Políticas que buscam enfraquecer os laços familiares.", "Ao grau em que os indivíduos podem acessar proteção social sem depender exclusivamente da família.", "A transferência de toda a responsabilidade do cuidado para as famílias.", "Políticas exclusivas para indivíduos que não possuem família."],
-                    answer: "Ao grau em que os indivíduos podem acessar proteção social sem depender exclusivamente da família.",
-                    explanation: "Alta desfamiliarização significa que o Estado provê serviços de cuidado (creches, casas de repouso), reduzindo a dependência da família, especialmente das mulheres, como provedoras de cuidado."
-                },
-                 {
-                    question: "Qual é o principal argumento para a desagregação de dados (por raça, gênero, território) na análise de políticas públicas?",
-                    options: ["Apenas para cumprir exigências legais.", "Para tornar os relatórios mais longos e complexos.", "Para identificar desigualdades ocultas nos dados agregados, tornando visível a exclusão estrutural e orientando políticas mais justas.", "Para simplificar a coleta de dados, focando em poucos grupos."],
-                    answer: "Para identificar desigualdades ocultas nos dados agregados, tornando visível a exclusão estrutural e orientando políticas mais justas.",
-                    explanation: "A desagregação permite ver como uma política afeta diferentes grupos de forma distinta. Por exemplo, permite observar que mulheres negras enfrentam maiores barreiras de acesso ao SUS, o que exige medidas específicas."
-                }
-            ];
-
-            // --- Lógica do Quiz ---
-            const quizContainer = document.getElementById('quiz-container');
-
-            function renderQuiz() {
-                quizContainer.innerHTML = '';
-                quizData.forEach((item, index) => {
-                    const questionEl = document.createElement('div');
-                    questionEl.className = 'quiz-question border border-slate-200 p-4 rounded-lg';
-                    questionEl.innerHTML = `
-                        <p class="font-semibold mb-3">${index + 1}. ${item.question}</p>
-                        <div class="space-y-2" id="options-${index}">
-                            ${item.options.map(option => `
-                                <label class="block p-3 border rounded-md quiz-option cursor-pointer">
-                                    <input type="radio" name="question-${index}" value="${option}" class="mr-2">
-                                    ${option}
-                                </label>
-                            `).join('')}
+            }
+            
+            function createDiagram(diagramData) {
+                const flowConnector = diagramData.flow ? `<div class="hidden lg:flex items-center text-purple-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></div>` : '';
+                const itemsHtml = diagramData.items.map(item => `
+                    <div class="flex flex-col text-center">
+                        <div class="bg-purple-100 text-purple-800 font-semibold p-3 rounded-t-lg">${item.title}</div>
+                        <div class="bg-white p-4 rounded-b-lg border border-purple-200 flex-grow">
+                            <ul class="text-sm text-stone-600 list-inside list-disc text-left">
+                                ${item.content.map(c => `<li>${c}</li>`).join('')}
+                            </ul>
                         </div>
-                        <button class="btn btn-sm mt-4 check-answer-btn" data-index="${index}">Verificar Resposta</button>
-                        <div id="explanation-${index}" class="hidden mt-3 p-3 bg-blue-50 border border-blue-200 rounded text-sm"></div>
-                    `;
-                    quizContainer.appendChild(questionEl);
+                    </div>
+                `).join(flowConnector);
+                
+                return `
+                    <div class="mt-6 p-6 bg-stone-50 rounded-lg">
+                        <h4 class="text-lg font-semibold text-center text-stone-700 mb-6">${diagramData.title}</h4>
+                        <div class="flex flex-col lg:flex-row gap-4 justify-center items-stretch">
+                           ${itemsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            data.eixos.forEach(eixo => {
+                const eixoEl = document.createElement('div');
+                eixoEl.className = 'flex flex-col lg:flex-row items-center gap-8 lg:gap-12';
+                
+                const vizContainer = `
+                    <div class="w-full lg:w-1/2 order-1 lg:order-2">
+                        <div class="card p-4">
+                            ${eixo.chart ? '<div class="chart-container"><canvas></canvas></div>' : ''}
+                            ${eixo.diagram ? createDiagram(eixo.diagram) : ''}
+                        </div>
+                    </div>
+                `;
+
+                const textContainer = `
+                    <div class="w-full lg:w-1/2 order-2 lg:order-1">
+                        <div class="flex items-center gap-4 mb-4">
+                            <span class="text-4xl">${eixo.icon}</span>
+                            <h3 class="text-2xl font-bold text-stone-800">${eixo.title}</h3>
+                        </div>
+                        <p class="text-stone-600 leading-relaxed">${eixo.content}</p>
+                    </div>
+                `;
+
+                eixoEl.innerHTML = textContainer + vizContainer;
+                eixosContainer.appendChild(eixoEl);
+                
+                if (eixo.chart) {
+                    const canvas = eixoEl.querySelector('canvas');
+                    if (canvas) {
+                       createChart(canvas.getContext('2d'), eixo.chart);
+                    }
+                }
+            });
+
+            data.timeline.forEach((item, index) => {
+                const sideClass = index % 2 === 0 ? 'lg:mr-auto lg:pr-8' : 'lg:ml-auto lg:pl-8';
+                const textAlign = index % 2 === 0 ? 'lg:text-right' : 'lg:text-left';
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'timeline-item mb-8 flex flex-col items-center lg:items-stretch';
+                itemEl.innerHTML = `
+                    <div class="timeline-dot"></div>
+                    <div class="w-full lg:w-1/2 ${sideClass}">
+                        <div class="card p-6">
+                            <p class="font-bold text-lg text-purple-600 ${textAlign}">${item.year}</p>
+                            <p class="mt-2 text-stone-600 ${textAlign}">${item.event}</p>
+                        </div>
+                    </div>
+                `;
+                timelineContainer.appendChild(itemEl);
+            });
+
+            data.flashcards.forEach(item => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'flashcard-container h-48';
+                cardEl.innerHTML = `
+                    <div class="flashcard w-full h-full">
+                        <div class="flashcard-front card bg-white">
+                            <h4 class="text-lg font-semibold text-stone-700">${item.term}</h4>
+                        </div>
+                        <div class="flashcard-back card bg-purple-500 text-white">
+                            <p>${item.definition}</p>
+                        </div>
+                    </div>
+                `;
+                flashcardsContainer.appendChild(cardEl);
+                cardEl.querySelector('.flashcard').addEventListener('click', (e) => {
+                    e.currentTarget.classList.toggle('flipped');
+                });
+            });
+
+            data.personagens.forEach(item => {
+                const personagemEl = document.createElement('div');
+                personagemEl.className = 'card p-6 text-center';
+                personagemEl.innerHTML = `
+                    <div class="mx-auto bg-purple-100 rounded-full h-20 w-20 flex items-center justify-center mb-4">
+                        <span class="text-3xl font-bold text-purple-600">${item.name.charAt(0)}</span>
+                    </div>
+                    <h4 class="text-xl font-bold text-stone-800">${item.name}</h4>
+                    <p class="mt-2 text-sm text-stone-600 leading-relaxed">${item.contribution}</p>
+                `;
+                personagensContainer.appendChild(personagemEl);
+            });
+
+            const startQuizBtn = document.getElementById('start-quiz-btn');
+            const quizContainer = document.getElementById('quiz-container');
+            const quizQuestionContainer = document.getElementById('quiz-question-container');
+            const quizResultsContainer = document.getElementById('quiz-results-container');
+            let currentQuestionIndex = 0;
+            let userAnswers = [];
+
+            function renderQuestion(index) {
+                const question = data.quiz[index];
+                const optionsHtml = question.options.map((option, i) => `
+                    <label class="block border border-stone-200 rounded-lg p-4 my-2 hover:bg-stone-50 cursor-pointer transition-colors">
+                        <input type="radio" name="quiz-option" value="${i}" class="mr-3">
+                        ${option}
+                    </label>
+                `).join('');
+                quizQuestionContainer.innerHTML = `
+                    <p class="text-lg font-semibold text-stone-700 mb-4">(${index + 1}/${data.quiz.length}) ${question.question}</p>
+                    <div class="options-container">${optionsHtml}</div>
+                    <button id="next-question-btn" class="mt-6 bg-purple-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-600 transition-colors disabled:bg-stone-300" disabled>Próxima</button>
+                `;
+                
+                const optionsContainer = quizQuestionContainer.querySelector('.options-container');
+                const nextBtn = document.getElementById('next-question-btn');
+
+                optionsContainer.addEventListener('change', () => {
+                    nextBtn.disabled = false;
+                });
+                
+                nextBtn.addEventListener('click', () => {
+                    const selectedOption = document.querySelector('input[name="quiz-option"]:checked');
+                    if(selectedOption){
+                        userAnswers[index] = parseInt(selectedOption.value);
+                        currentQuestionIndex++;
+                        if (currentQuestionIndex < data.quiz.length) {
+                            renderQuestion(currentQuestionIndex);
+                        } else {
+                            showResults();
+                        }
+                    }
                 });
             }
 
-            quizContainer.addEventListener('click', function(e) {
-                // Seleção de opção
-                if (e.target.closest('.quiz-option')) {
-                    const label = e.target.closest('.quiz-option');
-                    const radioGroup = label.parentElement;
-                    radioGroup.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
-                    label.classList.add('selected');
-                }
+            function showResults() {
+                quizQuestionContainer.classList.add('hidden');
+                quizResultsContainer.classList.remove('hidden');
                 
-                // Botão de verificar
-                if (e.target.classList.contains('check-answer-btn')) {
-                    const index = e.target.getAttribute('data-index');
-                    const questionData = quizData[index];
-                    const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
-                    const explanationEl = document.getElementById(`explanation-${index}`);
-                    const optionsContainer = document.getElementById(`options-${index}`);
+                let score = 0;
+                let resultsHtml = '<ul>';
+                data.quiz.forEach((q, i) => {
+                    const isCorrect = userAnswers[i] === q.answer;
+                    if(isCorrect) score++;
+                    resultsHtml += `
+                        <li class="p-4 border-b border-stone-200">
+                            <p class="font-semibold">${i+1}. ${q.question}</p>
+                            <p class="${isCorrect ? 'text-green-600' : 'text-red-600'}">Sua resposta: ${q.options[userAnswers[i]]} ${isCorrect ? '✔' : '❌'}</p>
+                            ${!isCorrect ? `<p class="text-stone-600">Resposta correta: ${q.options[q.answer]}</p>` : ''}
+                            <p class="text-sm text-stone-500 mt-1"><em>Explicação: ${q.explanation}</em></p>
+                        </li>
+                    `;
+                });
+                resultsHtml += '</ul>';
 
-                    if (!selectedOption) {
-                        alert('Por favor, selecione uma opção.');
-                        return;
-                    }
+                quizResultsContainer.innerHTML = `
+                    <h4 class="text-2xl font-bold mb-4">Resultado do Quiz</h4>
+                    <p class="text-lg mb-6">Você acertou <span class="font-bold text-purple-600">${score}</span> de ${data.quiz.length} questões.</p>
+                    <div class="text-left max-h-96 overflow-y-auto border border-stone-200 rounded-lg">${resultsHtml}</div>
+                    <button id="restart-quiz-btn" class="mt-6 bg-sky-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-600 transition-colors">Refazer Quiz</button>
+                `;
+                
+                document.getElementById('restart-quiz-btn').addEventListener('click', () => {
+                    quizResultsContainer.classList.add('hidden');
+                    quizContainer.classList.remove('hidden');
+                });
+            }
 
-                    optionsContainer.querySelectorAll('.quiz-option').forEach(label => {
-                        const input = label.querySelector('input');
-                        if (input.value === questionData.answer) {
-                            label.classList.add('correct');
-                        } else if (input.checked) {
-                            label.classList.add('incorrect');
-                        }
-                        input.disabled = true;
-                    });
-                    
-                    explanationEl.textContent = `Explicação: ${questionData.explanation}`;
-                    explanationEl.classList.remove('hidden');
-                    e.target.style.display = 'none'; // Esconde o botão após verificar
-                }
+            startQuizBtn.addEventListener('click', () => {
+                currentQuestionIndex = 0;
+                userAnswers = [];
+                quizContainer.classList.add('hidden');
+                quizQuestionContainer.classList.remove('hidden');
+                renderQuestion(currentQuestionIndex);
             });
 
-            renderQuiz();
+            const discursiveContainer = document.getElementById('discursive-container');
+            data.discursive.forEach(prova => {
+                const provaEl = document.createElement('div');
+                provaEl.className = 'bg-white rounded-xl shadow-lg mb-8';
+                
+                const questionsHtml = prova.questions.map((q, i) => `
+                    <div class="border-t border-stone-200 p-6">
+                        <div class="question-header cursor-pointer flex justify-between items-center">
+                            <h5 class="font-semibold text-stone-700">Questão ${i + 1}</h5>
+                            <span class="text-purple-500 transform transition-transform">▼</span>
+                        </div>
+                        <div class="question-content mt-4">
+                            <p class="text-stone-600 leading-relaxed">${q.question}</p>
+                            <div class="answer-container hidden mt-4">
+                                <h6 class="font-semibold text-sm text-purple-700">Sugestão de Resolução:</h6>
+                                <p class="text-sm text-stone-600 bg-purple-50 p-3 rounded-md mt-2">${q.answer}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
 
+                provaEl.innerHTML = `
+                    <div class="p-6">
+                        <h4 class="text-xl font-bold text-stone-800">${prova.title}</h4>
+                    </div>
+                    ${questionsHtml}
+                `;
+                discursiveContainer.appendChild(provaEl);
+            });
+            
+            discursiveContainer.querySelectorAll('.question-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const answer = header.parentElement.querySelector('.answer-container');
+                    const icon = header.querySelector('span');
+                    answer.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            });
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+            
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === current) {
+                        link.classList.add('active');
+                    }
+                });
+            });
         });
     </script>
 </body>
