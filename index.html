@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Chosen Palette: Serene Academia (#fdfaf6, #57534e, #a78bfa, #38bdf8) -->
-    <!-- Application Structure Plan: A estrutura da aplicação foi desenhada como um painel de controle de estudo, dividido em seções temáticas, em vez de seguir a ordem linear do relatório. A navegação superior permite acesso rápido a cada seção (Visão Geral, Eixos Temáticos, Linha do Tempo, Conceitos-Chave, Personagens, Teste seu Conhecimento). Essa abordagem foi escolhida para facilitar a exploração não linear e a consulta rápida, alinhando-se à proposta de um "infográfico interativo". A interatividade foca em reforçar o aprendizado através de quizzes, flashcards e visualizações de dados, promovendo um engajamento ativo com o conteúdo. -->
+    <!-- Application Structure Plan: A estrutura da aplicação foi desenhada como um painel de controle de estudo, dividido em seções temáticas, em vez de seguir a ordem linear do relatório. A navegação superior permite acesso rápido a cada seção (Visão Geral, Eixos Temáticos, Linha do Tempo, Conceitos-Chave, Personagens, Arquivos, Teste seu Conhecimento). Essa abordagem foi escolhida para facilitar a exploração não linear e a consulta rápida, alinhando-se à proposta de um "infográfico interativo". A interatividade foca em reforçar o aprendizado através de quizzes, flashcards e visualizações de dados, promovendo um engajamento ativo com o conteúdo. -->
     <!-- Visualization & Content Choices:
         - Relatório Info: Evolução dos valores das emendas parlamentares. Goal: Mostrar mudança drástica. Viz/Presentation: Gráfico de Barras (Chart.js). Interaction: Tooltips. Justification: Visualização clara e impactante do crescimento orçamentário.
         - Relatório Info: Desigualdade de gastos municipais. Goal: Comparar. Viz/Presentation: Gráfico de Donut (Chart.js). Interaction: Tooltips. Justification: Ilustra a diferença na regulação federal de forma simples e visual.
@@ -114,6 +114,12 @@
             width: 100%;
             max-width: 600px;
         }
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -121,26 +127,28 @@
     <header id="header" class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold text-stone-700">Estudo Interativo</h1>
-            <div class="hidden md:flex space-x-8">
+            <div class="hidden lg:flex items-center space-x-6">
                 <a href="#visao-geral" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Visão Geral</a>
-                <a href="#eixos-tematicos" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Eixos Temáticos</a>
+                <a href="#eixos-tematicos" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Eixos</a>
                 <a href="#linha-do-tempo" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Linha do Tempo</a>
                 <a href="#conceitos-chave" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Conceitos</a>
                 <a href="#personagens" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Personagens</a>
-                <a href="#teste-conhecimento" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Teste seu Conhecimento</a>
+                <a href="#arquivos-referencia" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Arquivos</a>
+                <a href="#teste-conhecimento" class="nav-link text-stone-600 hover:text-purple-500 font-medium">Testes</a>
             </div>
-            <button id="mobile-menu-button" class="md:hidden">
+            <button id="mobile-menu-button" class="lg:hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
                 </svg>
             </button>
         </nav>
-        <div id="mobile-menu" class="hidden md:hidden bg-white px-6 pb-4">
+        <div id="mobile-menu" class="hidden lg:hidden bg-white px-6 pb-4">
             <a href="#visao-geral" class="block py-2 text-stone-600 hover:text-purple-500">Visão Geral</a>
             <a href="#eixos-tematicos" class="block py-2 text-stone-600 hover:text-purple-500">Eixos Temáticos</a>
             <a href="#linha-do-tempo" class="block py-2 text-stone-600 hover:text-purple-500">Linha do Tempo</a>
             <a href="#conceitos-chave" class="block py-2 text-stone-600 hover:text-purple-500">Conceitos</a>
             <a href="#personagens" class="block py-2 text-stone-600 hover:text-purple-500">Personagens</a>
+            <a href="#arquivos-referencia" class="block py-2 text-stone-600 hover:text-purple-500">Arquivos</a>
             <a href="#teste-conhecimento" class="block py-2 text-stone-600 hover:text-purple-500">Teste seu Conhecimento</a>
         </div>
     </header>
@@ -175,6 +183,33 @@
             <h2 class="text-3xl font-bold text-center mb-12 text-stone-800">Personagens Relevantes</h2>
             <div id="personagens-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </section>
+
+        <section id="arquivos-referencia" class="py-20">
+            <h2 class="text-3xl font-bold text-center mb-12 text-stone-800">Arquivos de Referência</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div class="card p-6">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mx-auto mb-4">
+                        <svg class="h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0_12.75h7.5m-7.5_3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-center text-stone-800">Documentos</h3>
+                    <div id="docx-links" class="mt-4 space-y-2"></div>
+                </div>
+                <div class="card p-6">
+                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mx-auto mb-4">
+                        <svg class="h-10 w-10 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-center text-stone-800">PDFs</h3>
+                    <div id="pdf-links" class="mt-4 space-y-2"></div>
+                </div>
+                <div class="card p-6">
+                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mx-auto mb-4">
+                       <svg class="h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5a6 6 0 00-6-6a6 6 0 00-6 6v1.5a6 6 0 006 6z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 12.75a3 3 0 01-3-3v-1.5a3 3 0 013-3a3 3 0 013 3v1.5a3 3 0 01-3 3z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-center text-stone-800">Podcasts</h3>
+                    <div id="podcast-links" class="mt-4 space-y-2"></div>
+                </div>
+            </div>
+        </section>
         
         <section id="teste-conhecimento" class="py-20">
             <h2 class="text-3xl font-bold text-center mb-12 text-stone-800">Teste seu Conhecimento</h2>
@@ -182,7 +217,7 @@
                 <div class="bg-white p-8 rounded-xl shadow-lg">
                     <h3 class="text-2xl font-bold text-stone-800 mb-4">Quiz Interativo</h3>
                     <div id="quiz-container">
-                        <p class="text-stone-600 mb-4">Teste seus conhecimentos com 15 perguntas de múltipla escolha. No final, você verá sua pontuação e o gabarito comentado.</p>
+                        <p class="text-stone-600 mb-4">Teste seus conhecimentos com 15 perguntas de múltipla escolha. Navegue entre as questões, pule se precisar e finalize quando quiser.</p>
                         <button id="start-quiz-btn" class="bg-sky-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-600 transition-colors">Iniciar Quiz</button>
                     </div>
                     <div id="quiz-question-container" class="hidden"></div>
@@ -191,12 +226,23 @@
 
                 <div class="mt-16">
                     <h3 class="text-2xl font-bold text-stone-800 mb-4 text-center">Questões Discursivas para Prática</h3>
-                     <p class="text-center text-stone-500 mb-8">Analise os cenários e clique para ver uma sugestão de resolução.</p>
+                     <p class="text-center text-stone-500 mb-8">Analise os cenários e clique para ver o guia de resolução e exemplos de resposta.</p>
                     <div id="discursive-container" class="space-y-4"></div>
                 </div>
             </div>
         </section>
     </main>
+
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col modal-content scale-95">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h4 id="modal-title" class="text-lg font-bold">Exemplo de Resposta</h4>
+                <button id="modal-close-btn" class="text-stone-500 hover:text-stone-800">&times;</button>
+            </div>
+            <div id="modal-body" class="p-6 overflow-y-auto">
+            </div>
+        </div>
+    </div>
 
     <footer class="bg-stone-100 border-t border-stone-200 mt-20">
         <div class="container mx-auto px-6 py-8 text-center text-stone-500">
@@ -216,78 +262,30 @@
                         content: `A Constituição de 1988 redesenhou o pacto federativo, descentralizando responsabilidades e fortalecendo os municípios. Isso criou um complexo sistema de governança multinível que exige instrumentos de coordenação (financeiros, normativos, organizacionais) para alinhar políticas como o SUAS e o SUS. A eficácia dessa coordenação é um desafio constante, dada a grande desigualdade de capacidades institucionais e financeiras entre os entes federados. Estudos mostram que políticas mais reguladas pelo governo federal, como saúde e educação, tendem a ter gastos mais uniformes entre os municípios, sugerindo que a regulação federal é um fator chave para reduzir desigualdades territoriais.`,
                         chart: {
                             type: 'doughnut',
-                            title: 'Desigualdade de Gasto Público Municipal (Ilustrativo)',
                             data: {
                                 labels: ['Habitação e Urbanismo (Alta Desigualdade)', 'Transporte (Alta Desigualdade)', 'Saúde (Menor Desigualdade)', 'Educação (Menor Desigualdade)'],
-                                datasets: [{
-                                    label: 'Índice de Gini do Gasto',
-                                    data: [0.7, 0.65, 0.4, 0.35],
-                                    backgroundColor: ['#ef4444', '#f97316', '#22c55e', '#38bdf8'],
-                                }]
+                                datasets: [{ label: 'Índice de Gini do Gasto', data: [0.7, 0.65, 0.4, 0.35], backgroundColor: ['#ef4444', '#f97316', '#22c55e', '#38bdf8'] }]
                             },
-                            options: {
-                                plugins: {
-                                    title: { display: true, text: 'Desigualdade de Gasto Público Municipal (Ilustrativo)', font: { size: 16 } },
-                                    tooltip: { callbacks: { label: (context) => `Índice de Gini (ilustrativo): ${context.raw}` } }
-                                }
-                            }
+                            options: { plugins: { title: { display: true, text: 'Desigualdade de Gasto Público Municipal (Ilustrativo)', font: { size: 16 } }, tooltip: { callbacks: { label: (context) => `Índice de Gini (ilustrativo): ${context.raw}` } } } }
                         }
                     },
                     {
                         title: 'Segurança Pública e Direitos',
                         icon: '🛡️',
                         content: `A segurança pública no Rio de Janeiro, conforme discutido na ADPF 635, exemplifica a tensão entre uma abordagem de confronto ("guerra ao crime") e a garantia de direitos fundamentais. A alta letalidade policial, o uso de armamento pesado e a resistência a mecanismos de transparência (como câmeras corporais e GPS) são sintomas de uma crise profunda. A remoção da "redução da letalidade" do sistema de metas da polícia foi um ponto central de crítica do PGR, indicando um possível desvio de finalidade da política de segurança, que deveria priorizar a preservação de vidas. A ADPF busca reinserir o controle e a accountability como pilares da atuação policial.`,
-                        diagram: {
-                            type: 'html',
-                            title: 'Conflito de Visões na Segurança Pública',
-                            items: [
-                                { title: 'Visão de "Guerra"', content: ['Confronto Direto', 'Ênfase em Indicadores de Criminalidade', 'Uso de Força Letal', 'Baixa Transparência'] },
-                                { title: 'Visão Garantista', content: ['Preservação da Vida', 'Respeito aos Direitos Humanos', 'Controle e Accountability', 'Transparência (Câmeras, GPS)'] },
-                            ]
-                        }
+                        diagram: { type: 'html', title: 'Conflito de Visões na Segurança Pública', items: [{ title: 'Visão de "Guerra"', content: ['Confronto Direto', 'Ênfase em Indicadores de Criminalidade', 'Uso de Força Letal', 'Baixa Transparência'] }, { title: 'Visão Garantista', content: ['Preservação da Vida', 'Respeito aos Direitos Humanos', 'Controle e Accountability', 'Transparência (Câmeras, GPS)'] }] }
                     },
                     {
                         title: 'Análise e Avaliação de Políticas Públicas',
                         icon: '📊',
                         content: `Para uma gestão pública baseada em evidências, ferramentas como a Análise do Contexto (CIPI) e o Mapa de Processos e Resultados (MaPR) são fundamentais. A CIPI analisa as instituições, os atores e as ideias que moldam uma política, permitindo uma avaliação mais robusta e menos "neutra". O MaPR descreve a lógica causal de uma intervenção (Recursos → Atividades → Produtos → Resultados → Impactos), orientando o monitoramento e a avaliação. A distinção entre monitoramento (contínuo, focado na execução) e avaliação (esporádica, focada em impactos) é crucial. O uso da triangulação de evidências (quantitativas, qualitativas, de diferentes fontes) é considerado o "padrão-ouro" para garantir a robustez dos achados.`,
-                        diagram: {
-                            type: 'html',
-                            title: 'Estrutura do MaPR',
-                            items: [
-                                { title: 'Recursos', content: ['Orçamento, Pessoal, Infraestrutura'] },
-                                { title: 'Atividades', content: ['Ações realizadas, Treinamentos'] },
-                                { title: 'Produtos', content: ['Serviços entregues, Bens produzidos'] },
-                                { title: 'Resultados', content: ['Mudanças de curto/médio prazo'] },
-                                { title: 'Impactos', content: ['Transformações de longo prazo'] }
-                            ],
-                            flow: true
-                        }
+                        diagram: { type: 'html', title: 'Estrutura do MaPR', items: [ { title: 'Recursos', content: ['Orçamento, Pessoal, Infraestrutura'] }, { title: 'Atividades', content: ['Ações realizadas, Treinamentos'] }, { title: 'Produtos', content: ['Serviços entregues, Bens produzidos'] }, { title: 'Resultados', content: ['Mudanças de curto/médio prazo'] }, { title: 'Impactos', content: ['Transformações de longo prazo'] } ], flow: true }
                     },
                     {
                         title: 'Governança Contemporânea',
                         icon: '🌐',
                         content: `A governança atual no Brasil é marcada por tensões entre a busca por modernização, via transformação digital, e práticas políticas tradicionais, como as emendas parlamentares. A transformação digital preza pela eficiência, transparência e serviços centrados no cidadão. Em contraste, o crescimento expressivo das emendas parlamentares impositivas (de R$ 4 bi em 2015 para R$ 46 bi em 2024) reduz a capacidade de planejamento estratégico do Executivo e aumenta o risco de alocação de recursos por critérios políticos de curto prazo, podendo configurar "desvio de finalidade". Esse cenário evidencia um conflito entre uma lógica de governança técnica e racional e outra mais permeável a interesses particularistas.`,
-                        chart: {
-                            type: 'bar',
-                            title: 'Evolução das Emendas Parlamentares (Valores em R$ Bilhões)',
-                            data: {
-                                labels: ['2015', '2023 (Previsão)', '2024'],
-                                datasets: [{
-                                    label: 'Valor Total',
-                                    data: [4, 8, 46],
-                                    backgroundColor: ['#a78bfa', '#8b5cf6', '#7c3aed'],
-                                    borderColor: '#6d28d9',
-                                    borderWidth: 1
-                                }]
-                            },
-                             options: {
-                                plugins: {
-                                    title: { display: true, text: 'Evolução das Emendas Parlamentares (Valores em R$ Bilhões)', font: { size: 16 } },
-                                    tooltip: { callbacks: { label: (context) => `Valor: R$ ${context.raw} Bilhões` } }
-                                },
-                                scales: { y: { beginAtZero: true, ticks: { callback: (value) => `R$ ${value} bi` } } }
-                            }
-                        }
+                        chart: { type: 'bar', data: { labels: ['2015', '2023 (Previsão)', '2024'], datasets: [{ label: 'Valor Total', data: [4, 8, 46], backgroundColor: ['#a78bfa', '#8b5cf6', '#7c3aed'], borderColor: '#6d28d9', borderWidth: 1 }] }, options: { plugins: { title: { display: true, text: 'Evolução das Emendas Parlamentares (Valores em R$ Bilhões)', font: { size: 16 } }, tooltip: { callbacks: { label: (context) => `Valor: R$ ${context.raw} Bilhões` } } }, scales: { y: { beginAtZero: true, ticks: { callback: (value) => `R$ ${value} bi` } } } } }
                     },
                 ],
                 timeline: [
@@ -324,6 +322,11 @@
                     { name: 'William Beveridge', contribution: 'Autor do Relatório Beveridge (1942), que influenciou mundialmente o conceito de Seguridade Social ao propor o combate aos "cinco gigantes" (Pobreza, Doença, etc.).' },
                     { name: 'Otto von Bismarck', contribution: 'Chanceler alemão que apoiou a criação do primeiro sistema de Seguro Social do mundo no século XIX, um marco histórico da proteção social estatal.' }
                 ],
+                reference_files: {
+                    docx: { 'Resumo Completo': 'https://docs.google.com/document/d/1zf2uFtG13DlHYJifrRz37WjHwFb-WNHjbWv1aJAFyLQ/edit?usp=drive_link' },
+                    pdf: { 'Resumo Curtíssimo': 'https://drive.google.com/file/d/1B5x2Etoq4RHxTYpUEDxfDpvnJZyPe3Cm/view?usp=drive_link', 'Resumo Completo (PDF)': 'https://drive.google.com/file/d/14329spajr6Ksz7WwNh3pmmMcKxgXvFIf/view?usp=drive_link', 'Questões': 'https://drive.google.com/file/d/1gKNqXsUGpVQwfSSpoKxLTpSOV81x-HtE/view?usp=drive_link' },
+                    podcast: { 'Podcast 1 (Principal)': 'https://notebooklm.google.com/notebook/20203836-742f-4f9c-a5e7-19015f4a8db8/audio', 'Podcast 2': 'https://notebooklm.google.com/notebook/c7f9812a-5eac-4c88-bd7f-1755fe0bc32c/audio' }
+                },
                 quiz: [
                     { question: 'A Análise do Contexto Institucional, Político e Ideacional (CIPI) propõe a incorporação de quais chaves analíticas?', options: ['Economia, Sociedade e Cultura', 'Instituições, Interesses e Ideias', 'Orçamento, Legislação e Burocracia', 'Eficiência, Eficácia e Efetividade'], answer: 1, explanation: 'A CIPI, conforme Jannuzzi, analisa as Instituições (polity), os Interesses dos atores (politics) e as Ideias (zeitgeist) que moldam uma política.' },
                     { question: 'Qual a principal função de um Mapa de Processos e Resultados (MaPR)?', options: ['Listar todas as despesas financeiras', 'Descrever a narrativa causal do programa', 'Apenas identificar os problemas a resolver', 'Avaliar a satisfação dos beneficiários'], answer: 1, explanation: 'O MaPR descreve a cadeia causal de uma intervenção: Recursos → Atividades → Produtos → Resultados → Impactos.' },
@@ -344,311 +347,201 @@
                 discursive: [
                     {
                         title: 'Prova 1: Análise Contextual, Avaliação de Políticas Públicas e Desafios da Segurança',
+                        context: 'O cenário da segurança pública em grandes metrópoles brasileiras é frequentemente marcado por uma tensão entre a necessidade de controle da criminalidade e a garantia dos direitos fundamentais da população. Essa dinâmica complexa desafia gestores públicos a desenharem intervenções que sejam, ao mesmo tempo, eficazes e legítimas. Ferramentas de análise e avaliação de políticas públicas tornam-se, nesse contexto, indispensáveis para orientar a tomada de decisão baseada em evidências, superando abordagens puramente reativas ou ideológicas.',
                         questions: [
                             {
                                 question: `A Análise do Contexto Institucional, Político e Ideacional (CIPI) é uma ferramenta crucial para a compreensão e avaliação de políticas públicas.
                                 <br>a. Discorra sobre como os três componentes da CIPI (Instituições, Atores e Ideias) interagem para moldar o desenho e a implementação de uma política de segurança pública, utilizando como pano de fundo a situação do Rio de Janeiro discutida na ADPF 635.
                                 <br>b. Explique de que maneira a ausência de uma análise contextual robusta, como a proposta pela CIPI, pode levar a interpretações equivocadas sobre a eficácia ou os fracassos de intervenções na área da segurança.`,
-                                answer: `A política de segurança pública no Rio de Janeiro, debatida na ADPF 635, é moldada pela interação da CIPI. As **Instituições** (regras, polícias, sistema de justiça) definem o quadro operacional. Os **Atores** (governo, MP, comunidades) possuem interesses distintos. E as **Ideias** (a "guerra" ao crime vs. a valorização da vida) disputam a hegemonia, influenciando as estratégias (ex: remoção da redução da letalidade das metas). Sem uma análise CIPI robusta, uma avaliação pode atribuir o fracasso de uma medida a falhas técnicas, ignorando resistências políticas ou a inadequação da medida ao contexto. Isso resulta em recomendações ineficazes, pois a avaliação se torna "pretensamente neutra", desconsiderando as dinâmicas de poder que determinam os resultados.`
+                                guide: `Um bom desempenho nesta questão exige a articulação dos três componentes da CIPI com o caso concreto da ADPF 635. <br>Para o item 'a', o candidato deve: 1) Definir brevemente cada componente: Instituições (regras formais e informais, como leis e a estrutura da polícia), Atores (governo, Ministério Público, sociedade civil, grupos criminosos e seus interesses) e Ideias (as narrativas em disputa, como "guerra às drogas" versus "segurança cidadã"). 2) Demonstrar a interação entre eles, explicando como a ideia de "guerra" (Ideias) pode influenciar a criação de metas que ignoram a letalidade (Instituições) e justificar ações violentas por parte de certos Atores (polícia, governo). <br>Para o item 'b', o argumento central é que uma avaliação "context-free" seria superficial. O candidato deve explicar que, sem a CIPI, o aumento da violência poderia ser erroneamente atribuído a uma "falha de implementação" ou "falta de recursos", ignorando as verdadeiras causas, como a influência de interesses políticos (Atores) ou a predominância de uma ideologia de confronto (Ideias), levando a recomendações ineficazes.`,
+                                example1: `a. A política de segurança pública do Rio de Janeiro, conforme a ADPF 635, é um exemplo claro da interação da CIPI. As **Instituições** incluem as regras formais do sistema de metas da polícia e a estrutura hierárquica das forças de segurança, que foram alteradas para não penalizar a letalidade. Os **Atores** são múltiplos: o governo estadual, com interesse em mostrar resultados rápidos contra o crime; o Ministério Público, atuando como fiscal da lei e defensor dos direitos fundamentais; as comunidades, buscando segurança e o fim da violência; e as próprias forças policiais. As **Ideias** em conflito são a visão de "guerra ao crime", que legitima o confronto e a força letal como ferramentas válidas, e a visão garantista, que prioriza a vida e a legalidade. A hegemonia da primeira ideia influenciou Atores (governo) a mudarem as Instituições (metas), resultando na política de alta letalidade criticada na ADPF. <br>b. A ausência de uma análise CIPI leva a diagnósticos falhos. Sem ela, um avaliador poderia concluir que o fracasso em reduzir a violência decorre de problemas logísticos ou de treinamento (aspectos técnicos), quando na verdade a causa raiz é política e ideológica. A avaliação ignoraria que a "opção" pela letalidade é uma decisão moldada por interesses e valores específicos. Isso resultaria em recomendações inócuas, como "mais treinamento", sem tocar no cerne do problema: a cultura institucional e a disputa de narrativas que sustentam a violência estatal, tornando a avaliação uma ferramenta burocrática em vez de um instrumento de transformação.`,
+                                example2: `a. No contexto da ADPF 635, a CIPI revela como a política de segurança fluminense foi moldada. Primeiro, as **Instituições**, como as normas que regem as operações policiais e o sistema de gratificações, foram desenhadas para premiar a repressão, não a preservação da vida. Segundo, diversos **Atores** com interesses conflitantes atuam nesse cenário: o Poder Executivo, buscando legitimidade através de uma imagem de força; o Judiciário e o MP, tentando impor limites constitucionais; e as comunidades, presas entre a violência criminal e a estatal. Terceiro, a **Ideia** dominante de uma "guerra" contra um inimigo interno justifica, no discurso público, ações de extrema violência. É a interação desses três elementos que produz uma política com os resultados vistos: alta letalidade e violações de direitos. <br>b. Sem a CIPI, a avaliação de uma intervenção de segurança se torna míope. Por exemplo, a baixa eficácia de um programa de policiamento comunitário poderia ser atribuída à "falta de adesão dos policiais". Uma análise contextual, no entanto, revelaria que o problema não é individual, mas estrutural: a cultura organizacional (Instituições), a pressão por resultados de confronto (Atores) e a desvalorização de abordagens preventivas (Ideias) sabotam a iniciativa. Portanto, não considerar o contexto leva a conclusões superficiais e impede a identificação das verdadeiras alavancas de mudança, que são frequentemente políticas e institucionais, não apenas operacionais.`
                             },
                             {
                                 question: `O Mapa de Processos e Resultados (MaPR) é uma ferramenta essencial para a gestão de programas, enquanto a transformação digital busca modernizar a oferta de serviços públicos.
                                 <br>a. Detalhe como a cadeia causal do MaPR (Recursos, Atividades, Produtos, Resultados, Impactos) poderia ser aplicada para analisar um programa hipotético de instalação de câmeras corporais em policiais, conforme as demandas da ADPF 635.
                                 <br>b. Relacione como os princípios da transformação digital, como acessibilidade e interoperabilidade, poderiam otimizar a coleta, o armazenamento e o uso dos dados gerados por essas câmeras para fins de transparência e controle.`,
-                                answer: `Em um programa de câmeras corporais, o MaPR se aplicaria assim: **Recursos** (orçamento), **Atividades** (compra, treinamento), **Produto** (policiais com câmeras), **Resultados** (redução de denúncias, mais evidências) e **Impacto** (redução da letalidade, mais confiança). Os princípios da transformação digital otimizariam o programa: a **interoperabilidade** integraria as imagens a outros sistemas de investigação, e a **acessibilidade** (controlada) aos dados por órgãos de controle aumentaria a transparência. Isso transformaria as câmeras em ferramentas efetivas de controle, garantindo a integridade das evidências e o uso ético da tecnologia.`
+                                guide: `Para uma resposta completa, o candidato precisa demonstrar domínio sobre o MaPR e os conceitos de transformação digital, aplicando-os a um caso prático.<br>No item 'a', deve-se construir a cadeia causal de forma lógica: **Recursos** (dinheiro para comprar as câmeras, software), **Atividades** (treinar os policiais, definir protocolos de uso), **Produtos** (X policiais equipados, Y horas de gravação geradas), **Resultados** (redução do uso da força, aumento da transparência processual, diminuição de denúncias falsas) e **Impactos** (redução da letalidade policial, aumento da confiança da comunidade na polícia).<br>No item 'b', a conexão com a transformação digital é fundamental. O candidato deve explicar que a **interoperabilidade** permitiria, por exemplo, que o vídeo de uma ocorrência fosse automaticamente vinculado ao boletim de ocorrência e ao processo judicial, criando um fluxo de dados contínuo e auditável. A **acessibilidade** (com regras de sigilo) permitiria que órgãos de controle (MP, Corregedoria) e a defesa tivessem acesso rápido e seguro às gravações, fortalecendo a accountability e o devido processo legal.`,
+                                example1: `a. A análise de um programa de câmeras corporais via MaPR seguiria esta cadeia: **Recursos** seriam os investimentos na aquisição dos equipamentos, sistemas de armazenamento em nuvem e pessoal técnico. As **Atividades** envolveriam o treinamento dos agentes para o uso correto dos dispositivos e a criação de protocolos sobre quando gravar. Os **Produtos** seriam o número de policiais com câmeras em uso diário e o volume de dados de vídeo armazenados de forma segura. Os **Resultados** esperados de curto e médio prazo seriam a diminuição de confrontos e do uso excessivo da força, a qualificação das provas em processos criminais e a redução de reclamações contra policiais. Por fim, o **Impacto** de longo prazo seria a redução sustentada da letalidade policial e o fortalecimento da legitimidade da instituição policial perante a sociedade. <br>b. A transformação digital potencializaria esse programa. A **interoperabilidade** seria crucial para conectar os dados das câmeras com outros sistemas públicos, como os do Judiciário e do Ministério Público. Isso permitiria que uma gravação fosse anexada a um inquérito digitalmente, de forma automática e com selo de autenticidade, evitando manipulações. Já a **acessibilidade**, aplicada com rigorosos controles de permissão, garantiria que defensores públicos, promotores e corregedores pudessem consultar as imagens de forma remota e segura, agilizando investigações e garantindo o contraditório. A tecnologia, assim, passaria de mero equipamento para um pilar de um ecossistema de transparência e controle.`,
+                                example2: `a. Aplicando o MaPR ao programa de câmeras: a lógica causal começa com os **Recursos**, que são o orçamento para a compra dos aparelhos e a infraestrutura de dados. Seguem as **Atividades**, como a distribuição dos equipamentos e a capacitação contínua das tropas. O **Produto** direto é a quantidade de operações policiais devidamente registradas em vídeo. A partir daí, surgem os **Resultados**, como a melhora no comportamento dos agentes, a redução de abordagens violentas e a produção de evidências mais robustas para a justiça. O **Impacto** final, objetivo maior da política, seria a diminuição drástica das mortes em operações e a reconstrução do vínculo de confiança entre a polícia e as comunidades, pacificando territórios. <br>b. A otimização via transformação digital é evidente. A **acessibilidade** permitiria criar portais seguros onde dados estatísticos (sem identificação pessoal) sobre o uso das câmeras fossem públicos, promovendo o controle social. A **interoperabilidade** seria fundamental para que o sistema das câmeras "conversasse" com o sistema de GPS das viaturas, cruzando dados de localização e imagem para fornecer um panorama completo e auditável de cada operação. Essa integração de sistemas transformaria as gravações de um registro isolado em uma peça central de um sistema de governança de segurança pública mais inteligente, transparente e responsável, alinhado aos princípios do Estado de Direito.`
                             }
                         ]
                     },
                     {
                         title: 'Prova 2: Políticas Sociais, Federalismo e Evidências na Gestão Pública',
+                        context: 'A efetividade das políticas sociais no Brasil depende intrinsecamente do arranjo federativo e da capacidade do Estado em coordenar ações em múltiplos níveis de governo. A Constituição de 1988 estabeleceu um sistema de seguridade social ambicioso, mas sua implementação enfrenta os desafios da desigualdade regional e da fragmentação das ações. Nesse sentido, a gestão baseada em evidências e a articulação intersetorial não são apenas boas práticas, mas necessidades para que os direitos sociais se concretizem de forma equânime em todo o território nacional.',
                         questions: [
                              {
                                 question: `O federalismo brasileiro, reconfigurado pela CF/88, impõe desafios à coordenação de políticas sociais como o SUAS, que busca conciliar universalismo e focalização.
                                 <br>a. Discuta como a descentralização de responsabilidades no SUAS interage com as diferentes capacidades financeiras e institucionais dos municípios, e de que forma os instrumentos de coordenação federal tentam mitigar as desigualdades resultantes.
                                 <br>b. Analise a tensão entre os princípios do universalismo e da focalização na oferta de serviços socioassistenciais pelo SUAS.`,
-                                answer: `A descentralização no SUAS encontra o desafio das heterogêneas capacidades municipais. Para mitigar desigualdades, a coordenação federal usa instrumentos como cofinanciamento, normativas nacionais e instâncias de pactuação (CIT, CIBs). A tensão universalismo vs. focalização é gerenciada por níveis de proteção: a Proteção Básica (CRAS) é mais universalista, prevenindo riscos; a Proteção Especial (CREAS) é focalizada, atendendo casos de direitos violados. Assim, o SUAS tenta conciliar o acolhimento amplo com respostas específicas às vulnerabilidades agudas.`
+                                guide: 'A resposta deve focar na dinâmica federativa do SUAS. <br>No item "a", é preciso explicar que a descentralização, embora democrática, encontra o obstáculo da imensa desigualdade entre os mais de 5 mil municípios brasileiros (capacidade de arrecadação, corpo técnico etc.). Em seguida, deve-se citar e explicar os mecanismos de coordenação que a União utiliza para corrigir isso: o cofinanciamento federal (transferências fundo a fundo), a normatização (ex: Tipificação Nacional de Serviços Socioassistenciais) e as instâncias de pactuação (CIT, CIBs), que buscam criar um padrão mínimo nacional. <br>No item "b", a chave é mostrar que não há uma exclusão, mas uma complementariedade. O candidato deve explicar que o SUAS opera com diferentes níveis de proteção: a Proteção Social Básica (CRAS) tem um caráter mais universal, buscando prevenir riscos para toda a população de um território. Já a Proteção Social Especial (CREAS) é focalizada, atuando sobre situações onde os direitos já foram violados (violência, abandono), demandando uma atenção especializada. A tensão é gerenciada por essa arquitetura que combina porta de entrada universal com serviços focalizados.',
+                                example1: `a. A descentralização do SUAS, ao transferir a execução para os municípios, choca-se com a profunda desigualdade de capacidades do federalismo brasileiro. Municípios ricos possuem equipes robustas e cofinanciam mais, enquanto pequenos municípios dependem quase exclusivamente dos repasses federais e sofrem com a alta rotatividade de pessoal. Para mitigar isso, a União atua como coordenadora, utilizando instrumentos como as transferências fundo a fundo, que buscam garantir um piso de financiamento, e a Norma Operacional Básica (NOB-SUAS), que estabelece padrões e regras para a gestão em todo o país. As Comissões Intergestores (CIB e CIT) funcionam como espaços de negociação para pactuar essas regras, tentando equilibrar a autonomia municipal com a necessidade de um padrão nacional de qualidade. <br>b. A tensão entre universalismo e focalização no SUAS é resolvida através de sua organização por níveis de complexidade. A Proteção Social Básica, operada pelos CRAS, é universalista no seu escopo territorial, oferecendo serviços preventivos a todas as famílias de uma determinada área de abrangência, visando fortalecer os vínculos comunitários. Por outro lado, a Proteção Social Especial, a cargo dos CREAS, é altamente focalizada, pois se destina a indivíduos e famílias que já se encontram em situação de risco ou violação de direitos, como violência doméstica ou trabalho infantil. Assim, o sistema não opta por um princípio em detrimento do outro, mas os articula de forma complementar para atender às diferentes demandas da população.`,
+                                example2: `a. No SUAS, a descentralização para os municípios cria um mosaico de capacidades. Enquanto uma capital pode ter uma secretaria estruturada, um pequeno município no interior pode ter dificuldades até para manter uma equipe mínima. Essa assimetria é o principal desafio do nosso federalismo. A coordenação federal busca reduzir esse abismo por meio de incentivos financeiros atrelados ao cumprimento de metas e pela regulação, como a Tipificação dos Serviços, que define o que deve ser ofertado em cada CRAS e CREAS do país. As instâncias de pactuação, como a CIB e a CIT, são fundamentais, pois permitem que prefeitos e governadores negociem com a União as condições de implementação, ajustando as normas à realidade local sem perder a coerência nacional. <br>b. O SUAS lida com a tensão universalismo-focalização de forma inteligente. O sistema é universal no sentido de que o direito à assistência social é para todos que dela necessitarem, rompendo com a antiga visão de favor. Contudo, na prática, ele se organiza para ser mais eficiente. A Proteção Básica (CRAS) é a porta de entrada universal, com foco na prevenção. Quando um problema mais grave é detectado, a família é encaminhada para um serviço focalizado da Proteção Especial (CREAS), que possui profissionais especializados para lidar com violações de direitos. Portanto, o SUAS universaliza o acesso ao direito, mas focaliza suas intervenções de maior complexidade para garantir que os recursos cheguem a quem mais precisa.`
                             },
                              {
                                 question: `A gestão pública contemporânea demanda o uso crescente de evidências e o enfrentamento de problemas complexos através da intersetorialidade.
                                 <br>a. Apresente as três concepções de "evidência" (restrita, ampla e pragmática) e explique por que a triangulação é um "padrão-ouro" para a robustez da avaliação.
                                 <br>b. Discuta a importância da intersetorialidade para lidar com problemas complexos como o SINASE e aponte dois desafios para sua efetivação.`,
-                                answer: `As três concepções de evidência são: **restrita** (científica-quantitativa), **ampla** (narrativas) e **pragmática** (conjunto de dados e conhecimentos para um propósito). A triangulação é um "padrão-ouro" porque, ao combinar diferentes tipos de dados e fontes, aumenta a robustez e a consistência dos achados, minimizando vieses. A intersetorialidade é crucial para problemas como o SINASE, que demandam ações articuladas de saúde, educação, etc. Dois desafios para sua efetivação no Brasil são: a fragmentação institucional e a cultura setorializada, e as assimetrias de capacidade e recursos entre os entes federados, que dificultam a implementação de ações coordenadas.`
+                                guide: 'Esta questão avalia a compreensão de conceitos de avaliação e gestão de políticas. <br>Para o item "a", o candidato deve definir as três concepções: **Restrita** (dados de experimentos ou quase-experimentos, com foco na causalidade quantitativa), **Ampla** (inclui narrativas, percepções e conhecimentos de diferentes atores, valorizando o saber local) e **Pragmática** (conjunto de conhecimentos e dados relevantes para subsidiar uma decisão específica, combinando fontes). A triangulação é o "padrão-ouro" porque, ao combinar diferentes métodos e fontes (ex: dados estatísticos, entrevistas, grupos focais), ela aumenta a validade e a confiabilidade dos achados, minimizando os vieses que um único método poderia ter. <br>No item "b", deve-se explicar que a intersetorialidade é essencial para o SINASE (Sistema Nacional de Atendimento Socioeducativo) porque a ressocialização de um adolescente em conflito com a lei não é uma tarefa exclusiva da segurança ou da justiça, mas depende de ações coordenadas de saúde (mental e física), educação (retorno à escola), assistência social (apoio à família) e profissionalização. Dois desafios para sua efetivação são: a **fragmentação orçamentária e institucional** (cada secretaria tem seu próprio orçamento e metas, sem incentivos para colaborar) e a **cultura setorializada** (profissionais de diferentes áreas têm linguagens e lógicas de trabalho distintas, dificultando a comunicação e a construção de planos de atendimento integrados).',
+                                example1: `a. As concepções de evidência variam: a **restrita** valoriza dados de avaliações de impacto com grupo de controle; a **ampla** incorpora saberes locais, narrativas e a visão dos beneficiários; e a **pragmática** foca em usar o melhor conjunto de informações disponível para a tomada de decisão. A triangulação é o "padrão-ouro" porque compensa as fraquezas de um método com as forças de outro. Por exemplo, um dado quantitativo pode mostrar que a evasão escolar caiu, mas apenas entrevistas (dado qualitativo) podem revelar o "porquê" dessa queda, como a atuação de um programa específico. Ao cruzar fontes, o avaliador obtém uma visão mais completa, profunda e confiável do fenômeno, aumentando a robustez de suas conclusões e recomendações. <br>b. A intersetorialidade é vital para o SINASE, pois a trajetória de um adolescente em conflito com a lei é multifatorial. Não basta a medida socioeducativa; é preciso garantir sua matrícula na escola (Educação), tratamento para dependência química (Saúde) e apoio à sua família (Assistência Social). Sem essa rede, a reincidência é quase certa. Os principais desafios para efetivar essa articulação são: 1) a **fragmentação institucional**, onde cada política opera em sua "caixinha", com orçamentos e metas próprias que não incentivam a cooperação; e 2) a **cultura burocrática setorial**, que cria barreiras de comunicação e dificulta a construção de um plano de acompanhamento individual que seja verdadeiramente integrado entre as diferentes áreas.`,
+                                example2: `a. As três concepções de evidência são: a **restrita**, que privilegia o método científico e dados quantitativos para estabelecer causalidade; a **ampla**, que inclui conhecimentos tácitos e as experiências dos envolvidos; e a **pragmática**, que busca a combinação mais útil de informações para resolver um problema. A triangulação é considerada "padrão-ouro" pois gera maior validade aos resultados de uma avaliação. Ao confrontar dados de diferentes naturezas — como estatísticas de um sistema, a percepção dos gestores e a satisfação dos usuários —, é possível confirmar, refutar ou aprofundar os achados, resultando em uma análise muito mais sólida e menos suscetível a vieses de uma única fonte ou método de coleta. <br>b. Um adolescente no SINASE é um exemplo clássico de problema complexo que demanda intersetorialidade. Sua situação não será resolvida apenas com a medida socioeducativa; ele precisa de suporte da rede de saúde mental, de oportunidades de educação e de qualificação profissional. A ação isolada de uma secretaria é ineficaz. Dois grandes desafios para isso são: primeiro, a **rigidez orçamentária**, que impede o financiamento de ações conjuntas entre diferentes pastas; e segundo, a **assimetria de poder e recursos entre os entes federados**, pois a medida de internação é estadual, mas a maioria dos serviços de apoio (como o CRAS) é municipal, criando um descompasso de responsabilidades que dificulta enormemente a coordenação.`
                             }
                         ]
                     }
                 ]
             };
-
+            
             const eixosContainer = document.getElementById('eixos-container');
             const timelineContainer = document.getElementById('timeline-container');
             const flashcardsContainer = document.getElementById('flashcards-container');
             const personagensContainer = document.getElementById('personagens-container');
-
-            function createChart(ctx, chartData) {
-                new Chart(ctx, {
-                    type: chartData.type,
-                    data: chartData.data,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        ...chartData.options
-                    }
-                });
-            }
+            
+            function createChart(ctx, chartData) { new Chart(ctx, { type: chartData.type, data: chartData.data, options: { responsive: true, maintainAspectRatio: false, ...chartData.options } }); }
             
             function createDiagram(diagramData) {
                 const flowConnector = diagramData.flow ? `<div class="hidden lg:flex items-center text-purple-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></div>` : '';
-                const itemsHtml = diagramData.items.map(item => `
-                    <div class="flex flex-col text-center">
-                        <div class="bg-purple-100 text-purple-800 font-semibold p-3 rounded-t-lg">${item.title}</div>
-                        <div class="bg-white p-4 rounded-b-lg border border-purple-200 flex-grow">
-                            <ul class="text-sm text-stone-600 list-inside list-disc text-left">
-                                ${item.content.map(c => `<li>${c}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                `).join(flowConnector);
-                
-                return `
-                    <div class="mt-6 p-6 bg-stone-50 rounded-lg">
-                        <h4 class="text-lg font-semibold text-center text-stone-700 mb-6">${diagramData.title}</h4>
-                        <div class="flex flex-col lg:flex-row gap-4 justify-center items-stretch">
-                           ${itemsHtml}
-                        </div>
-                    </div>
-                `;
+                const itemsHtml = diagramData.items.map(item => `<div class="flex flex-col text-center"><div class="bg-purple-100 text-purple-800 font-semibold p-3 rounded-t-lg">${item.title}</div><div class="bg-white p-4 rounded-b-lg border border-purple-200 flex-grow"><ul class="text-sm text-stone-600 list-inside list-disc text-left">${item.content.map(c => `<li>${c}</li>`).join('')}</ul></div></div>`).join(flowConnector);
+                return `<div class="mt-6 p-6 bg-stone-50 rounded-lg"><h4 class="text-lg font-semibold text-center text-stone-700 mb-6">${diagramData.title}</h4><div class="flex flex-col lg:flex-row gap-4 justify-center items-stretch">${itemsHtml}</div></div>`;
             }
 
             data.eixos.forEach(eixo => {
                 const eixoEl = document.createElement('div');
                 eixoEl.className = 'flex flex-col lg:flex-row items-center gap-8 lg:gap-12';
-                
-                const vizContainer = `
-                    <div class="w-full lg:w-1/2 order-1 lg:order-2">
-                        <div class="card p-4">
-                            ${eixo.chart ? '<div class="chart-container"><canvas></canvas></div>' : ''}
-                            ${eixo.diagram ? createDiagram(eixo.diagram) : ''}
-                        </div>
-                    </div>
-                `;
-
-                const textContainer = `
-                    <div class="w-full lg:w-1/2 order-2 lg:order-1">
-                        <div class="flex items-center gap-4 mb-4">
-                            <span class="text-4xl">${eixo.icon}</span>
-                            <h3 class="text-2xl font-bold text-stone-800">${eixo.title}</h3>
-                        </div>
-                        <p class="text-stone-600 leading-relaxed">${eixo.content}</p>
-                    </div>
-                `;
-
+                const vizContainer = `<div class="w-full lg:w-1/2 order-1 lg:order-2"><div class="card p-4">${eixo.chart ? '<div class="chart-container"><canvas></canvas></div>' : ''}${eixo.diagram ? createDiagram(eixo.diagram) : ''}</div></div>`;
+                const textContainer = `<div class="w-full lg:w-1/2 order-2 lg:order-1"><div class="flex items-center gap-4 mb-4"><span class="text-4xl">${eixo.icon}</span><h3 class="text-2xl font-bold text-stone-800">${eixo.title}</h3></div><p class="text-stone-600 leading-relaxed">${eixo.content}</p></div>`;
                 eixoEl.innerHTML = textContainer + vizContainer;
                 eixosContainer.appendChild(eixoEl);
-                
-                if (eixo.chart) {
-                    const canvas = eixoEl.querySelector('canvas');
-                    if (canvas) {
-                       createChart(canvas.getContext('2d'), eixo.chart);
-                    }
-                }
+                if (eixo.chart) { createChart(eixoEl.querySelector('canvas').getContext('2d'), eixo.chart); }
             });
 
             data.timeline.forEach((item, index) => {
                 const sideClass = index % 2 === 0 ? 'lg:mr-auto lg:pr-8' : 'lg:ml-auto lg:pl-8';
                 const textAlign = index % 2 === 0 ? 'lg:text-right' : 'lg:text-left';
-
                 const itemEl = document.createElement('div');
                 itemEl.className = 'timeline-item mb-8 flex flex-col items-center lg:items-stretch';
-                itemEl.innerHTML = `
-                    <div class="timeline-dot"></div>
-                    <div class="w-full lg:w-1/2 ${sideClass}">
-                        <div class="card p-6">
-                            <p class="font-bold text-lg text-purple-600 ${textAlign}">${item.year}</p>
-                            <p class="mt-2 text-stone-600 ${textAlign}">${item.event}</p>
-                        </div>
-                    </div>
-                `;
+                itemEl.innerHTML = `<div class="timeline-dot"></div><div class="w-full lg:w-1/2 ${sideClass}"><div class="card p-6"><p class="font-bold text-lg text-purple-600 ${textAlign}">${item.year}</p><p class="mt-2 text-stone-600 ${textAlign}">${item.event}</p></div></div>`;
                 timelineContainer.appendChild(itemEl);
             });
 
             data.flashcards.forEach(item => {
                 const cardEl = document.createElement('div');
                 cardEl.className = 'flashcard-container h-48';
-                cardEl.innerHTML = `
-                    <div class="flashcard w-full h-full">
-                        <div class="flashcard-front card bg-white">
-                            <h4 class="text-lg font-semibold text-stone-700">${item.term}</h4>
-                        </div>
-                        <div class="flashcard-back card bg-purple-500 text-white">
-                            <p>${item.definition}</p>
-                        </div>
-                    </div>
-                `;
+                cardEl.innerHTML = `<div class="flashcard w-full h-full"><div class="flashcard-front card bg-white"><h4 class="text-lg font-semibold text-stone-700">${item.term}</h4></div><div class="flashcard-back card bg-purple-500 text-white"><p>${item.definition}</p></div></div>`;
                 flashcardsContainer.appendChild(cardEl);
-                cardEl.querySelector('.flashcard').addEventListener('click', (e) => {
-                    e.currentTarget.classList.toggle('flipped');
-                });
+                cardEl.querySelector('.flashcard').addEventListener('click', (e) => { e.currentTarget.classList.toggle('flipped'); });
             });
 
             data.personagens.forEach(item => {
                 const personagemEl = document.createElement('div');
                 personagemEl.className = 'card p-6 text-center';
-                personagemEl.innerHTML = `
-                    <div class="mx-auto bg-purple-100 rounded-full h-20 w-20 flex items-center justify-center mb-4">
-                        <span class="text-3xl font-bold text-purple-600">${item.name.charAt(0)}</span>
-                    </div>
-                    <h4 class="text-xl font-bold text-stone-800">${item.name}</h4>
-                    <p class="mt-2 text-sm text-stone-600 leading-relaxed">${item.contribution}</p>
-                `;
+                personagemEl.innerHTML = `<div class="mx-auto bg-purple-100 rounded-full h-20 w-20 flex items-center justify-center mb-4"><span class="text-3xl font-bold text-purple-600">${item.name.charAt(0)}</span></div><h4 class="text-xl font-bold text-stone-800">${item.name}</h4><p class="mt-2 text-sm text-stone-600 leading-relaxed">${item.contribution}</p>`;
                 personagensContainer.appendChild(personagemEl);
             });
+
+            const docxLinksContainer = document.getElementById('docx-links');
+            const pdfLinksContainer = document.getElementById('pdf-links');
+            const podcastLinksContainer = document.getElementById('podcast-links');
+            const createLink = (text, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="block text-center text-purple-600 hover:underline font-medium">${text}</a>`;
+            Object.entries(data.reference_files.docx).forEach(([text, url]) => { docxLinksContainer.innerHTML += createLink(text, url); });
+            Object.entries(data.reference_files.pdf).forEach(([text, url]) => { pdfLinksContainer.innerHTML += createLink(text, url); });
+            Object.entries(data.reference_files.podcast).forEach(([text, url]) => { podcastLinksContainer.innerHTML += createLink(text, url); });
 
             const startQuizBtn = document.getElementById('start-quiz-btn');
             const quizContainer = document.getElementById('quiz-container');
             const quizQuestionContainer = document.getElementById('quiz-question-container');
             const quizResultsContainer = document.getElementById('quiz-results-container');
             let currentQuestionIndex = 0;
-            let userAnswers = [];
-
+            let userAnswers = new Array(data.quiz.length);
+            
             function renderQuestion(index) {
                 const question = data.quiz[index];
-                const optionsHtml = question.options.map((option, i) => `
-                    <label class="block border border-stone-200 rounded-lg p-4 my-2 hover:bg-stone-50 cursor-pointer transition-colors">
-                        <input type="radio" name="quiz-option" value="${i}" class="mr-3">
-                        ${option}
-                    </label>
-                `).join('');
-                quizQuestionContainer.innerHTML = `
-                    <p class="text-lg font-semibold text-stone-700 mb-4">(${index + 1}/${data.quiz.length}) ${question.question}</p>
-                    <div class="options-container">${optionsHtml}</div>
-                    <button id="next-question-btn" class="mt-6 bg-purple-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-600 transition-colors disabled:bg-stone-300" disabled>Próxima</button>
-                `;
-                
-                const optionsContainer = quizQuestionContainer.querySelector('.options-container');
-                const nextBtn = document.getElementById('next-question-btn');
-
-                optionsContainer.addEventListener('change', () => {
-                    nextBtn.disabled = false;
-                });
-                
-                nextBtn.addEventListener('click', () => {
-                    const selectedOption = document.querySelector('input[name="quiz-option"]:checked');
-                    if(selectedOption){
-                        userAnswers[index] = parseInt(selectedOption.value);
-                        currentQuestionIndex++;
-                        if (currentQuestionIndex < data.quiz.length) {
-                            renderQuestion(currentQuestionIndex);
-                        } else {
-                            showResults();
-                        }
-                    }
-                });
+                const optionsHtml = question.options.map((option, i) => `<label class="block border border-stone-200 rounded-lg p-4 my-2 hover:bg-stone-50 cursor-pointer transition-colors"><input type="radio" name="quiz-option" value="${i}" class="mr-3" ${userAnswers[index] === i ? 'checked' : ''}>${option}</label>`).join('');
+                quizQuestionContainer.innerHTML = `<p class="text-lg font-semibold text-stone-700 mb-4">(${index + 1}/${data.quiz.length}) ${question.question}</p><div class="options-container">${optionsHtml}</div><div class="mt-6 flex justify-between items-center"><button id="prev-question-btn" class="bg-stone-200 text-stone-700 font-bold py-2 px-6 rounded-lg hover:bg-stone-300 transition-colors" ${index === 0 ? 'disabled' : ''}>Anterior</button><button id="finish-quiz-btn" class="bg-red-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-600 transition-colors">Finalizar Quiz</button><button id="next-question-btn" class="bg-purple-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-purple-600 transition-colors">${index === data.quiz.length - 1 ? 'Ver Resultado' : 'Próxima'}</button></div>`;
+                quizQuestionContainer.querySelector('.options-container').addEventListener('change', (e) => { userAnswers[index] = parseInt(e.target.value); });
+                document.getElementById('prev-question-btn').addEventListener('click', () => { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(currentQuestionIndex); } });
+                document.getElementById('next-question-btn').addEventListener('click', () => { if (currentQuestionIndex < data.quiz.length - 1) { currentQuestionIndex++; renderQuestion(currentQuestionIndex); } else { showResults(); } });
+                document.getElementById('finish-quiz-btn').addEventListener('click', showResults);
             }
-
             function showResults() {
                 quizQuestionContainer.classList.add('hidden');
                 quizResultsContainer.classList.remove('hidden');
-                
-                let score = 0;
+                let score = 0, answeredQuestions = 0;
                 let resultsHtml = '<ul>';
-                data.quiz.forEach((q, i) => {
-                    const isCorrect = userAnswers[i] === q.answer;
-                    if(isCorrect) score++;
-                    resultsHtml += `
-                        <li class="p-4 border-b border-stone-200">
-                            <p class="font-semibold">${i+1}. ${q.question}</p>
-                            <p class="${isCorrect ? 'text-green-600' : 'text-red-600'}">Sua resposta: ${q.options[userAnswers[i]]} ${isCorrect ? '✔' : '❌'}</p>
-                            ${!isCorrect ? `<p class="text-stone-600">Resposta correta: ${q.options[q.answer]}</p>` : ''}
-                            <p class="text-sm text-stone-500 mt-1"><em>Explicação: ${q.explanation}</em></p>
-                        </li>
-                    `;
-                });
+                data.quiz.forEach((q, i) => { if (userAnswers[i] !== undefined) { answeredQuestions++; const isCorrect = userAnswers[i] === q.answer; if(isCorrect) score++; resultsHtml += `<li class="p-4 border-b border-stone-200"><p class="font-semibold">${i+1}. ${q.question}</p><p class="${isCorrect ? 'text-green-600' : 'text-red-600'}">Sua resposta: ${q.options[userAnswers[i]]} ${isCorrect ? '✔' : '❌'}</p>${!isCorrect ? `<p class="text-stone-600">Resposta correta: ${q.options[q.answer]}</p>` : ''}<p class="text-sm text-stone-500 mt-1"><em>Explicação: ${q.explanation}</em></p></li>`; } });
                 resultsHtml += '</ul>';
-
-                quizResultsContainer.innerHTML = `
-                    <h4 class="text-2xl font-bold mb-4">Resultado do Quiz</h4>
-                    <p class="text-lg mb-6">Você acertou <span class="font-bold text-purple-600">${score}</span> de ${data.quiz.length} questões.</p>
-                    <div class="text-left max-h-96 overflow-y-auto border border-stone-200 rounded-lg">${resultsHtml}</div>
-                    <button id="restart-quiz-btn" class="mt-6 bg-sky-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-600 transition-colors">Refazer Quiz</button>
-                `;
-                
-                document.getElementById('restart-quiz-btn').addEventListener('click', () => {
-                    quizResultsContainer.classList.add('hidden');
-                    quizContainer.classList.remove('hidden');
-                });
+                quizResultsContainer.innerHTML = `<h4 class="text-2xl font-bold mb-4">Resultado do Quiz</h4><p class="text-lg mb-2">Você respondeu <span class="font-bold text-sky-600">${answeredQuestions}</span> de ${data.quiz.length} questões.</p><p class="text-lg mb-6">Acertos: <span class="font-bold text-purple-600">${score}</span>.</p><div class="text-left max-h-96 overflow-y-auto border border-stone-200 rounded-lg">${resultsHtml}</div><button id="restart-quiz-btn" class="mt-6 bg-sky-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-600 transition-colors">Refazer Quiz</button>`;
+                document.getElementById('restart-quiz-btn').addEventListener('click', () => { quizResultsContainer.classList.add('hidden'); quizContainer.classList.remove('hidden'); });
             }
-
-            startQuizBtn.addEventListener('click', () => {
-                currentQuestionIndex = 0;
-                userAnswers = [];
-                quizContainer.classList.add('hidden');
-                quizQuestionContainer.classList.remove('hidden');
-                renderQuestion(currentQuestionIndex);
-            });
-
+            startQuizBtn.addEventListener('click', () => { currentQuestionIndex = 0; userAnswers = new Array(data.quiz.length); quizContainer.classList.add('hidden'); quizQuestionContainer.classList.remove('hidden'); renderQuestion(currentQuestionIndex); });
+            
             const discursiveContainer = document.getElementById('discursive-container');
-            data.discursive.forEach(prova => {
+            const modalContainer = document.getElementById('modal-container');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            function openModal(title, content) {
+                modalTitle.textContent = title;
+                modalBody.innerHTML = `<div style="font-family: 'Courier New', monospace; line-height: 1.6; font-size: 0.9rem;">${content.replace(/\n/g, '<br>')}</div>`;
+                modalContainer.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContainer.classList.remove('opacity-0');
+                    modalContainer.querySelector('.modal-content').classList.remove('scale-95');
+                }, 10);
+            }
+            function closeModal() {
+                modalContainer.classList.add('opacity-0');
+                modalContainer.querySelector('.modal-content').classList.add('scale-95');
+                setTimeout(() => modalContainer.classList.add('hidden'), 300);
+            }
+            modalCloseBtn.addEventListener('click', closeModal);
+            modalContainer.addEventListener('click', (e) => { if (e.target === modalContainer) closeModal(); });
+
+            data.discursive.forEach((prova, provaIndex) => {
                 const provaEl = document.createElement('div');
                 provaEl.className = 'bg-white rounded-xl shadow-lg mb-8';
-                
-                const questionsHtml = prova.questions.map((q, i) => `
+                const questionsHtml = prova.questions.map((q, qIndex) => `
                     <div class="border-t border-stone-200 p-6">
-                        <div class="question-header cursor-pointer flex justify-between items-center">
-                            <h5 class="font-semibold text-stone-700">Questão ${i + 1}</h5>
-                            <span class="text-purple-500 transform transition-transform">▼</span>
-                        </div>
-                        <div class="question-content mt-4">
-                            <p class="text-stone-600 leading-relaxed">${q.question}</p>
-                            <div class="answer-container hidden mt-4">
-                                <h6 class="font-semibold text-sm text-purple-700">Sugestão de Resolução:</h6>
-                                <p class="text-sm text-stone-600 bg-purple-50 p-3 rounded-md mt-2">${q.answer}</p>
+                        <h5 class="font-semibold text-stone-800">Questão ${qIndex + 1}</h5>
+                        <p class="text-stone-600 leading-relaxed mt-2">${q.question}</p>
+                        <button class="expand-guide-btn mt-4 inline-flex items-center gap-2 bg-purple-100 text-purple-700 font-semibold py-2 px-4 rounded-lg hover:bg-purple-200 transition-colors shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                            Expandir Guia de Resolução
+                        </button>
+                        <div class="guide-content hidden mt-4 p-4 bg-stone-50 rounded-lg border">
+                            <h6 class="font-bold text-stone-700">Guia de Resolução:</h6>
+                            <p class="text-sm text-stone-600 mt-2">${q.guide}</p>
+                            <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                                <button class="show-example-btn flex-1 bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-sky-600 transition-colors shadow" data-title="Exemplo de Resposta 1" data-content="${q.example1.replace(/"/g, '&quot;')}">Ver Exemplo 1</button>
+                                <button class="show-example-btn flex-1 bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-sky-600 transition-colors shadow" data-title="Exemplo de Resposta 2" data-content="${q.example2.replace(/"/g, '&quot;')}">Ver Exemplo 2</button>
                             </div>
                         </div>
-                    </div>
-                `).join('');
-
-                provaEl.innerHTML = `
-                    <div class="p-6">
-                        <h4 class="text-xl font-bold text-stone-800">${prova.title}</h4>
-                    </div>
-                    ${questionsHtml}
-                `;
+                    </div>`).join('');
+                provaEl.innerHTML = `<div class="p-6"><h4 class="text-xl font-bold text-stone-800">${prova.title}</h4><p class="text-sm text-stone-500 italic mt-2">${prova.context}</p></div>${questionsHtml}`;
                 discursiveContainer.appendChild(provaEl);
             });
             
-            discursiveContainer.querySelectorAll('.question-header').forEach(header => {
-                header.addEventListener('click', () => {
-                    const answer = header.parentElement.querySelector('.answer-container');
-                    const icon = header.querySelector('span');
-                    answer.classList.toggle('hidden');
-                    icon.classList.toggle('rotate-180');
-                });
+            discursiveContainer.querySelectorAll('.expand-guide-btn').forEach(button => {
+                button.addEventListener('click', () => { button.nextElementSibling.classList.toggle('hidden'); });
             });
-            
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            mobileMenuButton.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
+            discursiveContainer.querySelectorAll('.show-example-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const btn = e.currentTarget;
+                    openModal(btn.dataset.title, btn.dataset.content);
+                });
             });
 
-            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+            const navLinks = document.querySelectorAll('.nav-link, #mobile-menu a');
             const sections = document.querySelectorAll('main section');
-            
+            navLinks.forEach(link => { link.addEventListener('click', () => { if (!mobileMenu.classList.contains('hidden')) { mobileMenu.classList.add('hidden'); } }); });
             window.addEventListener('scroll', () => {
                 let current = '';
-                sections.forEach(section => {
-                    const sectionTop = section.offsetTop;
-                    if (pageYOffset >= sectionTop - 100) {
-                        current = section.getAttribute('id');
-                    }
-                });
-                
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href').substring(1) === current) {
-                        link.classList.add('active');
-                    }
-                });
+                sections.forEach(section => { if (pageYOffset >= section.offsetTop - 100) { current = section.getAttribute('id'); } });
+                document.querySelectorAll('.nav-link').forEach(link => { link.classList.remove('active'); if (link.getAttribute('href').substring(1) === current) { link.classList.add('active'); } });
             });
         });
     </script>
